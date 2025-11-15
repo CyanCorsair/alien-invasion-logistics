@@ -4,14 +4,12 @@ using System;
 
 namespace Core.Controllers.UI.StrategicMap;
 
-public struct StrategicGameData
-{
-}
+public struct StrategicGameData { }
 
 public partial class StratMapUiController : Control
 {
     private Node2D solarSystemReference;
-    private GameDataManager gameDataManager;
+    private GameDataService gameDataService;
 
     private StrategicGameData currentGameData;
 

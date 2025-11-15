@@ -77,11 +77,7 @@ namespace AlienInvasionLogistics.Tests.Models
         {
             // Arrange
             var model = new AIPlayerStateModel();
-            var resourcesState = new ResourcesState
-            {
-                EnergyStored = 1000,
-                MineralsStored = 1000
-            };
+            var resourcesState = new ResourcesState { EnergyStored = 1000, MineralsStored = 1000 };
 
             // Act
             model.ResourcesState = resourcesState;
@@ -127,7 +123,11 @@ namespace AlienInvasionLogistics.Tests.Models
             // Arrange
             var model = new SolarSystemState();
             var sun = new SunStateModel { Id = Guid.NewGuid(), DisplayName = "Test Sun" };
-            var planetarySystem = new PlanetarySystemState { Id = Guid.NewGuid(), Name = "Inner System" };
+            var planetarySystem = new PlanetarySystemState
+            {
+                Id = Guid.NewGuid(),
+                Name = "Inner System"
+            };
 
             // Act
             model.SystemSun = sun;

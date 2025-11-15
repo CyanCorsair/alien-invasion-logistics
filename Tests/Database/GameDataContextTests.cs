@@ -108,9 +108,7 @@ namespace AlienInvasionLogistics.Tests.Database
             await _context.SaveChangesAsync();
 
             // Assert
-            var retrieved = _context.GameState
-                .Where(g => g.Id == gameState.Id)
-                .FirstOrDefault();
+            var retrieved = _context.GameState.Where(g => g.Id == gameState.Id).FirstOrDefault();
 
             retrieved.Should().NotBeNull();
             // Note: Navigation property loading would require Include in a real scenario

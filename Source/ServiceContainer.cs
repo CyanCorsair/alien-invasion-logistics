@@ -28,8 +28,8 @@ namespace Core
             _services = new ServiceCollection();
 
             // Configure DbContext with factory pattern
-            var folder = Environment.SpecialFolder.LocalApplicationData;
-            var path = Environment.GetFolderPath(folder);
+            var folder = System.Environment.SpecialFolder.LocalApplicationData;
+            var path = System.Environment.GetFolderPath(folder);
             var dbPath = System.IO.Path.Join(path, "GameData.db");
 
             _services.AddDbContextFactory<GameDataContext>(options =>

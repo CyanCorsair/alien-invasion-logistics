@@ -7,6 +7,7 @@ using Core.Controllers.UI.NewGameScreen;
 using Core.Database.Contexts;
 using Core.Database.Models;
 using Core.Types;
+using Core.Types.Research;
 using Microsoft.EntityFrameworkCore;
 
 namespace Core.Database
@@ -18,7 +19,8 @@ namespace Core.Database
 
         public void Initialize(IGameDataContextFactory contextFactory)
         {
-            _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
+            _contextFactory =
+                contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
         }
 
         public async Task CreateNewGameAsync(GameSettings settings)
@@ -27,70 +29,76 @@ namespace Core.Database
 
             GD.Print("Creating new game settings");
 
-            GameSettingsModel newGameSettings = new()
-            {
-                Id = Guid.NewGuid(),
-                PlayerName = settings.PlayerName,
-                NumberOfPlanets = settings.NumberOfPlanets,
-                StarType = settings.StarType,
-                StartingEnergy = settings.StartingResources.energy,
-                StartingMinerals = settings.StartingResources.minerals,
-            };
+            GameSettingsModel newGameSettings =
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    PlayerName = settings.PlayerName,
+                    NumberOfPlanets = settings.NumberOfPlanets,
+                    StarType = settings.StarType,
+                    StartingEnergy = settings.StartingResources.energy,
+                    StartingMinerals = settings.StartingResources.minerals,
+                };
 
-            PlayerStateModel playerState = new()
-            {
-                Id = Guid.NewGuid(),
-                ResourcesState = new ResourcesState
+            PlayerStateModel playerState =
+                new()
                 {
-                    EnergyStored = settings.StartingResources.energy,
-                    MineralsStored = settings.StartingResources.minerals,
-                    EnergyIncomeDaily = 0,
-                    MineralsIncomeDaily = 0
-                },
-                ResearchState = new ResearchState
-                {
-                    CurrentResearch = null,
-                    ResearchQueue = new List<ResearchItem>(),
-                    CompletedResearch = settings.StartingResearch.startingResearch ?? new List<ResearchItem>()
-                }
-            };
+                    Id = Guid.NewGuid(),
+                    ResourcesState = new ResourcesState
+                    {
+                        EnergyStored = settings.StartingResources.energy,
+                        MineralsStored = settings.StartingResources.minerals,
+                        EnergyIncomeDaily = 0,
+                        MineralsIncomeDaily = 0
+                    },
+                    ResearchState = new ResearchState
+                    {
+                        CurrentResearch = null,
+                        ResearchQueue = new List<ResearchItem>(),
+                        CompletedResearch =
+                            settings.StartingResearch.startingResearch ?? new List<ResearchItem>()
+                    }
+                };
 
-            AIPlayerStateModel aiPlayerState = new()
-            {
-                Id = Guid.NewGuid(),
-                ResourcesState = new ResourcesState
+            AIPlayerStateModel aiPlayerState =
+                new()
                 {
-                    EnergyStored = 1000,
-                    MineralsStored = 1000,
-                    EnergyIncomeDaily = 0,
-                    MineralsIncomeDaily = 0
-                },
-                ResearchState = new ResearchState
-                {
-                    CurrentResearch = null,
-                    ResearchQueue = new List<ResearchItem>(),
-                    CompletedResearch = new List<ResearchItem>()
-                }
-            };
+                    Id = Guid.NewGuid(),
+                    ResourcesState = new ResourcesState
+                    {
+                        EnergyStored = 1000,
+                        MineralsStored = 1000,
+                        EnergyIncomeDaily = 0,
+                        MineralsIncomeDaily = 0
+                    },
+                    ResearchState = new ResearchState
+                    {
+                        CurrentResearch = null,
+                        ResearchQueue = new List<ResearchItem>(),
+                        CompletedResearch = new List<ResearchItem>()
+                    }
+                };
 
             SolarSystemState solarSystemState = new() { Id = Guid.NewGuid() };
 
-            GameStateModel gameStateModel = new()
-            {
-                Id = Guid.NewGuid(),
-                CurrentInGameDay = 0,
-                CurrentTimeAcceleration = 1.0f,
-                PlayerStateForeignKey = playerState.Id,
-                AIPlayerStates = new List<AIPlayerStateModel> { aiPlayerState },
-                SolarSystemStateForeignKey = solarSystemState.Id
-            };
+            GameStateModel gameStateModel =
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    CurrentInGameDay = 0,
+                    CurrentTimeAcceleration = 1.0f,
+                    PlayerStateForeignKey = playerState.Id,
+                    AIPlayerStates = new List<AIPlayerStateModel> { aiPlayerState },
+                    SolarSystemStateForeignKey = solarSystemState.Id
+                };
 
-            GameDataModel newGameData = new()
-            {
-                Id = Guid.NewGuid(),
-                GameSettingsForeignKey = newGameSettings.Id,
-                GameStateForeignKey = gameStateModel.Id
-            };
+            GameDataModel newGameData =
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    GameSettingsForeignKey = newGameSettings.Id,
+                    GameStateForeignKey = gameStateModel.Id
+                };
 
             context.GameSettings.Add(newGameSettings);
             context.PlayerState.Add(playerState);
@@ -134,16 +142,17 @@ namespace Core.Database
         {
             await using var context = _contextFactory.CreateDbContext();
 
-            GameSaveModel newSave = new()
-            {
-                Id = Guid.NewGuid(),
-                SaveGameName = gameSave.SaveName,
-                InGameDay = gameSave.InGameDay,
-                GameMode = gameSave.GameMode,
-                GameDataForeignKey = gameSave.GameDataId,
-                CreatedAt = DateTime.UtcNow,
-                LastUpdatedAt = DateTime.UtcNow
-            };
+            GameSaveModel newSave =
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    SaveGameName = gameSave.SaveName,
+                    InGameDay = gameSave.InGameDay,
+                    GameMode = gameSave.GameMode,
+                    GameDataForeignKey = gameSave.GameDataId,
+                    CreatedAt = DateTime.UtcNow,
+                    LastUpdatedAt = DateTime.UtcNow
+                };
 
             context.GameSaves.Add(newSave);
             await context.SaveChangesAsync();

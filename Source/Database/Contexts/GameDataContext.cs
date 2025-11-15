@@ -64,37 +64,49 @@ namespace Core.Database.Contexts
             modelBuilder.Entity<PlayerStateModel>()
                 .OwnsOne(p => p.ResourcesState, rs =>
                 {
+                    rs.Property(r => r.Id).IsRequired();
                     rs.Property(r => r.EnergyStored).HasColumnName("EnergyStored");
                     rs.Property(r => r.EnergyIncomeDaily).HasColumnName("EnergyIncomeDaily");
                     rs.Property(r => r.MineralsStored).HasColumnName("MineralsStored");
                     rs.Property(r => r.MineralsIncomeDaily).HasColumnName("MineralsIncomeDaily");
-                });
+                })
+                .Navigation(p => p.ResourcesState)
+                .IsRequired();
 
             modelBuilder.Entity<PlayerStateModel>()
                 .OwnsOne(p => p.ResearchState, rs =>
                 {
+                    rs.Property(r => r.Id).IsRequired();
                     rs.OwnsOne(r => r.CurrentResearch);
                     rs.OwnsMany(r => r.ResearchQueue);
                     rs.OwnsMany(r => r.CompletedResearch);
-                });
+                })
+                .Navigation(p => p.ResearchState)
+                .IsRequired();
 
             // Configure owned types for AIPlayerStateModel
             modelBuilder.Entity<AIPlayerStateModel>()
                 .OwnsOne(p => p.ResourcesState, rs =>
                 {
+                    rs.Property(r => r.Id).IsRequired();
                     rs.Property(r => r.EnergyStored).HasColumnName("EnergyStored");
                     rs.Property(r => r.EnergyIncomeDaily).HasColumnName("EnergyIncomeDaily");
                     rs.Property(r => r.MineralsStored).HasColumnName("MineralsStored");
                     rs.Property(r => r.MineralsIncomeDaily).HasColumnName("MineralsIncomeDaily");
-                });
+                })
+                .Navigation(p => p.ResourcesState)
+                .IsRequired();
 
             modelBuilder.Entity<AIPlayerStateModel>()
                 .OwnsOne(p => p.ResearchState, rs =>
                 {
+                    rs.Property(r => r.Id).IsRequired();
                     rs.OwnsOne(r => r.CurrentResearch);
                     rs.OwnsMany(r => r.ResearchQueue);
                     rs.OwnsMany(r => r.CompletedResearch);
-                });
+                })
+                .Navigation(p => p.ResearchState)
+                .IsRequired();
 
             // Configure navigation properties for SolarSystemState
             modelBuilder.Entity<SolarSystemState>()

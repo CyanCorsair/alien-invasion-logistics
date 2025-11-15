@@ -9,8 +9,10 @@ namespace Core.Database.Models
         public Guid Id { get; set; } = Guid.NewGuid();
 
         // Owned types - no separate table needed, stored inline
-        public ResourcesState ResourcesState { get; set; }
-        public ResearchState ResearchState { get; set; }
+        [Required]
+        public ResourcesState ResourcesState { get; set; } = new ResourcesState();
+        [Required]
+        public ResearchState ResearchState { get; set; } = new ResearchState();
     }
 
     public class AIPlayerStateModel
@@ -19,7 +21,9 @@ namespace Core.Database.Models
         public Guid Id { get; set; } = Guid.NewGuid();
 
         // Owned types - no separate table needed, stored inline
-        public ResourcesState ResourcesState { get; set; }
-        public ResearchState ResearchState { get; set; }
+        [Required]
+        public ResourcesState ResourcesState { get; set; } = new ResourcesState();
+        [Required]
+        public ResearchState ResearchState { get; set; } = new ResearchState();
     }
 }

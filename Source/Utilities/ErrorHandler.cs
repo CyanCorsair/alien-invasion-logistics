@@ -41,7 +41,7 @@ namespace Core.Utilities
                 Exception = ex,
                 Severity = severity,
                 Timestamp = DateTime.UtcNow,
-                StackTrace = ex?.StackTrace ?? Environment.StackTrace
+                StackTrace = ex?.StackTrace ?? System.Environment.StackTrace
             };
 
             // Log to Godot console
@@ -79,7 +79,7 @@ namespace Core.Utilities
         {
             try
             {
-                using var file = FileAccess.Open(LOG_FILE_PATH, FileAccess.ModeFlags.ReadWrite);
+                using var file = Godot.FileAccess.Open(LOG_FILE_PATH, Godot.FileAccess.ModeFlags.ReadWrite);
                 if (file != null)
                 {
                     file.SeekEnd();
