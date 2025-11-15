@@ -1,0 +1,36 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Alien Invasion Logistics"
+run/main_scene="uid://b7bjspe4e2y7h"
+config/features=PackedStringArray("4.5", "C#", "Forward Plus")
+config/icon="res://icon.svg"
+
+[autoload]
+
+ErrorHandler="*res://Source/Utilities/ErrorHandler.cs"
+ServiceContainer="*res://Source/ServiceContainer.cs"
+GameDataService="*res://Source/GameDataService.cs"
+
+[display]
+
+window/size/viewport_width=2048
+window/size/viewport_height=1440
+window/size/mode=3
+
+[dotnet]
+
+project/assembly_name="Alien Invasion Logistics"
+
+[global_group]
+
+Persist="Objects to store"

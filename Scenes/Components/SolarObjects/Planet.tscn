@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c762xnc2rwrwu"]
+
+[ext_resource type="Script" uid="uid://ctrt7tn0agpte" path="res://Source/GameObjects/Planet.cs" id="1_xj30g"]
+
+[node name="Planet" type="Node2D"]
+script = ExtResource("1_xj30g")

@@ -1,0 +1,192 @@
+[gd_scene load_steps=5 format=3 uid="uid://cgvqr1x704vju"]
+
+[ext_resource type="Script" uid="uid://bmwj6rm6vjg0o" path="res://Source/UI/MenuControllers/NewGameScreenController.cs" id="1_bk8m6"]
+
+[sub_resource type="Theme" id="Theme_j3lp1"]
+
+[sub_resource type="Theme" id="Theme_bqbfg"]
+default_font_size = 32
+
+[sub_resource type="Theme" id="Theme_bk8m6"]
+default_font_size = 32
+
+[node name="NewGameScreen" type="Panel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_bk8m6")
+
+[node name="SettingsPanel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 19.0
+offset_right = 1112.0
+offset_bottom = 544.0
+
+[node name="BasicSettings" type="VBoxContainer" parent="SettingsPanel"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 344.0
+offset_bottom = 499.0
+theme_override_constants/separation = 14
+
+[node name="BasicSettingsTitle" type="RichTextLabel" parent="SettingsPanel/BasicSettings"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_font_sizes/normal_font_size = 24
+theme_override_font_sizes/bold_font_size = 24
+theme_override_font_sizes/bold_italics_font_size = 24
+theme_override_font_sizes/italics_font_size = 24
+theme_override_font_sizes/mono_font_size = 24
+text = "Basic settings"
+
+[node name="PlayerNameContainer" type="HBoxContainer" parent="SettingsPanel/BasicSettings"]
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_constants/separation = 8
+
+[node name="PlayerNameLabel" type="Label" parent="SettingsPanel/BasicSettings/PlayerNameContainer"]
+layout_mode = 2
+text = "Player name"
+
+[node name="PlayerNameTextField" type="LineEdit" parent="SettingsPanel/BasicSettings/PlayerNameContainer"]
+custom_minimum_size = Vector2(180, 24)
+layout_mode = 2
+max_length = 32
+clear_button_enabled = true
+
+[node name="PlanetCountContainer" type="HBoxContainer" parent="SettingsPanel/BasicSettings"]
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_constants/separation = 4
+
+[node name="PlanetCountLabel" type="Label" parent="SettingsPanel/BasicSettings/PlanetCountContainer"]
+layout_mode = 2
+text = "Amount of planets"
+
+[node name="PlanetCountText" type="RichTextLabel" parent="SettingsPanel/BasicSettings/PlanetCountContainer"]
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+theme_override_font_sizes/normal_font_size = 24
+text = "5"
+fit_content = true
+horizontal_alignment = 1
+
+[node name="PlanetCountRange" type="HSlider" parent="SettingsPanel/BasicSettings/PlanetCountContainer"]
+custom_minimum_size = Vector2(100, 24)
+layout_mode = 2
+size_flags_vertical = 1
+min_value = 1.0
+max_value = 20.0
+value = 5.0
+rounded = true
+ticks_position = 3
+
+[node name="StarTypeCobtainer" type="HBoxContainer" parent="SettingsPanel/BasicSettings"]
+layout_mode = 2
+size_flags_vertical = 0
+theme = SubResource("Theme_j3lp1")
+theme_override_constants/separation = 100
+
+[node name="StarTypeLabel" type="Label" parent="SettingsPanel/BasicSettings/StarTypeCobtainer"]
+layout_mode = 2
+text = "Star type"
+
+[node name="StarTypeDropdown" type="MenuBar" parent="SettingsPanel/BasicSettings/StarTypeCobtainer"]
+custom_minimum_size = Vector2(100, 24)
+layout_mode = 2
+
+[node name="StarTypeOptions" type="OptionButton" parent="SettingsPanel/BasicSettings/StarTypeCobtainer/StarTypeDropdown"]
+layout_mode = 0
+offset_right = 32.0
+offset_bottom = 20.0
+selected = 2
+item_count = 3
+popup/item_0/text = "Blue Giant"
+popup/item_0/id = 0
+popup/item_1/text = "Red Giant"
+popup/item_1/id = 1
+popup/item_2/text = "Sol"
+popup/item_2/id = 2
+
+[node name="StartingResourcesContainer" type="HBoxContainer" parent="SettingsPanel/BasicSettings"]
+layout_mode = 2
+size_flags_vertical = 0
+theme = SubResource("Theme_j3lp1")
+theme_override_constants/separation = 51
+
+[node name="StartingResourcesLabel" type="Label" parent="SettingsPanel/BasicSettings/StartingResourcesContainer"]
+layout_mode = 2
+text = "Starting resources"
+
+[node name="StartingResourcesDropdown" type="MenuBar" parent="SettingsPanel/BasicSettings/StartingResourcesContainer"]
+custom_minimum_size = Vector2(100, 24)
+layout_mode = 2
+
+[node name="StartingResourceOptions" type="OptionButton" parent="SettingsPanel/BasicSettings/StartingResourcesContainer/StartingResourcesDropdown"]
+layout_mode = 0
+offset_right = 32.0
+offset_bottom = 20.0
+selected = 1
+item_count = 3
+popup/item_0/text = "Few"
+popup/item_0/id = 0
+popup/item_1/text = "Normal"
+popup/item_1/id = 1
+popup/item_2/text = "Plenty"
+popup/item_2/id = 2
+
+[node name="AdvancedSettings" type="VBoxContainer" parent="SettingsPanel"]
+layout_mode = 0
+offset_left = 368.0
+offset_top = 23.0
+offset_right = 1050.0
+offset_bottom = 498.0
+
+[node name="AdvancedSettingsTitle" type="RichTextLabel" parent="SettingsPanel/AdvancedSettings"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_font_sizes/normal_font_size = 24
+theme_override_font_sizes/bold_font_size = 24
+theme_override_font_sizes/bold_italics_font_size = 24
+theme_override_font_sizes/italics_font_size = 24
+theme_override_font_sizes/mono_font_size = 24
+text = "Advanced Settings"
+
+[node name="ControlsPanel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 558.0
+offset_right = 1112.0
+offset_bottom = 626.0
+
+[node name="ControlsContainer" type="HBoxContainer" parent="ControlsPanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -257.0
+offset_top = -27.5
+offset_right = 285.0
+offset_bottom = 27.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="StartGameButton" type="Button" parent="ControlsPanel/ControlsContainer"]
+custom_minimum_size = Vector2(256, 0)
+layout_mode = 2
+theme = SubResource("Theme_bqbfg")
+text = "Start game"
+
+[node name="CancelStartButton" type="Button" parent="ControlsPanel/ControlsContainer"]
+custom_minimum_size = Vector2(256, 0)
+layout_mode = 2
+theme = SubResource("Theme_bk8m6")
+text = "Cancel"

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://qlq6ocng1s2e"]
+
+[ext_resource type="Script" uid="uid://owy5h4j2q4b0" path="res://Source/TacWorldBase.cs" id="1_707gg"]
+
+[node name="TacWorldBase" type="Node2D"]
+script = ExtResource("1_707gg")

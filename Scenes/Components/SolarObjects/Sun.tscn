@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dlcick8qvlewn"]
+
+[ext_resource type="Script" uid="uid://m31bsmdmlb1j" path="res://Source/GameObjects/Sun.cs" id="1_a0rbq"]
+
+[node name="Sun" type="Node2D"]
+script = ExtResource("1_a0rbq")
