@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Core.Database;
 using Core.Database.Contexts;
+using Core.Events;
 using System;
 
 namespace Core
@@ -32,8 +33,8 @@ namespace Core
             var path = System.Environment.GetFolderPath(folder);
             var dbPath = System.IO.Path.Join(path, "GameData.db");
 
-            _services.AddDbContextFactory<GameDataContext>(options =>
-                options.UseSqlite($"Data Source={dbPath}")
+            _services.AddDbContextFactory<GameDataContext>(
+                options => options.UseSqlite($"Data Source={dbPath}")
             );
 
             // Register custom factory wrapper
@@ -43,6 +44,13 @@ namespace Core
                     .UseSqlite($"Data Source={dbPath}")
                     .Options;
                 return new GameDataContextFactory(options);
+            });
+
+            // Register EventBus
+            _services.AddSingleton<IEventBus>(sp =>
+            {
+                var eventBus = GetNode<EventBus>("/root/EventBus");
+                return eventBus;
             });
 
             // Register services
