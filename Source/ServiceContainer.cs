@@ -50,6 +50,13 @@ namespace Core
             _services.AddSingleton<IEventBus>(sp =>
             {
                 var eventBus = GetNode<EventBus>("/root/EventBus");
+
+                if (eventBus is null)
+                {
+                    throw new InvalidOperationException(
+                        "EventBus node not found in the scene tree."
+                    );
+                }
                 return eventBus;
             });
 
