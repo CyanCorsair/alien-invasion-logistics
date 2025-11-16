@@ -120,11 +120,23 @@ classDiagram
         +DateTime Timestamp
     }
 
+    %% Game Lifecycle Events
     class GameCreatedEvent {
         +Guid GameDataId
         +string PlayerName
     }
 
+    class GameLoadedEvent {
+        +Guid GameDataId
+        +string SaveName
+    }
+
+    class GameSavedEvent {
+        +Guid SaveId
+        +string SaveName
+    }
+
+    %% Resource Events
     class ResourcesChangedEvent {
         +int EnergyStored
         +int MineralsStored
@@ -132,9 +144,41 @@ classDiagram
         +float MineralsIncomeDaily
     }
 
+    %% Research Events
     class ResearchStartedEvent {
         +Guid ResearchId
         +string ResearchName
+    }
+
+    class ResearchCompletedEvent {
+        +Guid ResearchId
+        +string ResearchName
+    }
+
+    %% Time Events
+    class DayAdvancedEvent {
+        +int CurrentDay
+    }
+
+    class TimeAccelerationChangedEvent {
+        +float NewAcceleration
+        +float OldAcceleration
+    }
+
+    %% UI Events
+    class SceneChangeRequestedEvent {
+        +string ScenePath
+    }
+
+    class UIRefreshRequestedEvent {
+        +string UIElementName
+    }
+
+    %% Error Events
+    class ErrorOccurredEvent {
+        +string Message
+        +Exception Exception
+        +string Severity
     }
 
     %% Data Service Layer
@@ -165,6 +209,16 @@ classDiagram
     class GameDataContextFactory {
         -DbContextOptions~GameDataContext~ _options
         +CreateDbContext() GameDataContext
+    }
+
+    class GameDataContext {
+        +DbSet~GameDataModel~ GameData
+        +DbSet~GameSaveModel~ GameSaves
+        +DbSet~GameStateModel~ GameState
+        +DbSet~GameSettingsModel~ GameSettings
+        +DbSet~PlayerStateModel~ PlayerState
+        +DbSet~AIPlayerStateModel~ AIPlayerStates
+        +DbSet~SolarSystemState~ SolarSystemState
     }
 
     %% Database Models
@@ -215,6 +269,12 @@ classDiagram
         +ResearchState ResearchState
     }
 
+    class AIPlayerStateModel {
+        +Guid Id
+        +ResourcesState ResourcesState
+        +ResearchState ResearchState
+    }
+
     class ResourcesState {
         +Guid Id
         +int EnergyStored
@@ -238,12 +298,22 @@ classDiagram
         +List~AsteroidBeltState~ AsteroidBelts
     }
 
+    class PlanetarySystemState {
+        +Guid Id
+        +string Name
+        +Guid SolarSystemStateId
+        +SolarSystemState SolarSystem
+        +List~PlanetStateModel~ Planets
+    }
+
     class SunStateModel {
         +Guid Id
         +string DisplayName
         +string SystemName
         +float PositionX
         +float PositionY
+        +float VelocityX
+        +float VelocityY
         +float Mass
     }
 
@@ -253,8 +323,42 @@ classDiagram
         +string SystemName
         +float PositionX
         +float PositionY
+        +float VelocityX
+        +float VelocityY
         +float Mass
         +Guid PlanetarySystemId
+        +PlanetarySystemState PlanetarySystem
+    }
+
+    class AsteroidBeltState {
+        +Guid Id
+        +string Name
+        +Guid SolarSystemStateId
+        +SolarSystemState SolarSystem
+    }
+
+    %% Type System
+    class ResearchItem {
+        +Guid Id
+        +string Name
+        +string DisplayName
+        +string Description
+    }
+
+    class IGameResource {
+        <<interface>>
+        +string Name
+        +Sprite2D Icon
+    }
+
+    class Energy {
+        +string Name
+        +Sprite2D Icon
+    }
+
+    class Minerals {
+        +string Name
+        +Sprite2D Icon
     }
 
     %% Solar System Generation
@@ -320,51 +424,118 @@ classDiagram
         +WriteToLogFile(ErrorInfo)
         +ShowCriticalErrorDialog(string)
         +HandleDatabaseError(Exception, string)
+        +HandleSceneLoadError(Exception, string)
     }
 
-    %% Relationships
+    class ErrorInfo {
+        +string Message
+        +Exception Exception
+        +ErrorSeverity Severity
+        +DateTime Timestamp
+        +string StackTrace
+    }
+
+    %% Relationships - Interfaces
     IBasePlayer <|.. Player : implements
     IBasePlayer <|.. AiPlayer : implements
     IStellarBody <|.. Planet : implements
     IStellarBody <|.. Sun : implements
     IEventBus <|.. EventBus : implements
     IGameEvent <|.. GameEvent : implements
-    GameEvent <|-- GameCreatedEvent : extends
-    GameEvent <|-- ResourcesChangedEvent : extends
-    GameEvent <|-- ResearchStartedEvent : extends
     IGameDataService <|.. GameDataService : implements
     IGameDataContextFactory <|.. GameDataContextFactory : implements
+    IGameResource <|.. Energy : implements
+    IGameResource <|.. Minerals : implements
 
+    %% Relationships - Event Hierarchy
+    GameEvent <|-- GameCreatedEvent : extends
+    GameEvent <|-- GameLoadedEvent : extends
+    GameEvent <|-- GameSavedEvent : extends
+    GameEvent <|-- ResourcesChangedEvent : extends
+    GameEvent <|-- ResearchStartedEvent : extends
+    GameEvent <|-- ResearchCompletedEvent : extends
+    GameEvent <|-- DayAdvancedEvent : extends
+    GameEvent <|-- TimeAccelerationChangedEvent : extends
+    GameEvent <|-- SceneChangeRequestedEvent : extends
+    GameEvent <|-- UIRefreshRequestedEvent : extends
+    GameEvent <|-- ErrorOccurredEvent : extends
+
+    %% Relationships - Core Dependencies
     MainGame --> ServiceContainer : uses
     MainGame --> GameMode : uses
     ServiceContainer --> GameDataService : provides
     ServiceContainer --> EventBus : provides
     GameDataService --> IGameDataContextFactory : uses
     GameDataService --> GameDataModel : manages
-    
+    GameDataContextFactory --> GameDataContext : creates
+
+    %% Relationships - Player System
     Player --> ResourcesState : has
     Player --> ResearchState : has
     AiPlayer --> ResourcesState : has
     AiPlayer --> ResearchState : has
 
+    %% Relationships - Database Models
     GameDataModel --> GameSettingsModel : contains
     GameDataModel --> GameStateModel : contains
     GameSaveModel --> GameDataModel : references
     GameStateModel --> PlayerStateModel : contains
+    GameStateModel --> AIPlayerStateModel : contains many
     GameStateModel --> SolarSystemState : contains
     PlayerStateModel --> ResourcesState : owns
     PlayerStateModel --> ResearchState : owns
-    SolarSystemState --> SunStateModel : contains
-    SolarSystemState --> PlanetStateModel : contains
+    AIPlayerStateModel --> ResourcesState : owns
+    AIPlayerStateModel --> ResearchState : owns
+    ResearchState --> ResearchItem : references
 
+    %% Relationships - Solar System Hierarchy (FIXED)
+    SolarSystemState --> SunStateModel : contains
+    SolarSystemState --> PlanetarySystemState : contains many
+    SolarSystemState --> AsteroidBeltState : contains many
+    PlanetarySystemState --> PlanetStateModel : contains many
+
+    %% Relationships - Services
     SolarSystemGenerator --> SunStateModel : creates
     SolarSystemGenerator --> PlanetStateModel : creates
+    SolarSystemGenerator --> PlanetarySystemState : creates
     SolarSystemGenerator --> Sun : instantiates
     SolarSystemGenerator --> Planet : instantiates
     SolarSystemSceneManager --> SolarSystemGenerator : uses
     SolarSystemSceneManager --> IGameDataContextFactory : uses
 
+    %% Relationships - UI Controllers
     NewGameScreenController --> GameDataService : uses
     NewGameScreenController --> EventBus : publishes to
     StratMapUiController --> GameDataService : uses
+
+    %% Relationships - Error Handling
+    ErrorHandler --> ErrorInfo : creates
 ```
+
+## How to View
+
+1. **VS Code**: Install the "Markdown Preview Mermaid Support" extension
+2. **GitHub**: This will render automatically when pushed to GitHub
+3. **Online**: Copy to https://mermaid.live for instant preview
+
+## Updates in This Version
+
+### Fixed Critical Issues
+- ✅ Added **PlanetarySystemState** as intermediate layer between SolarSystemState and PlanetStateModel
+- ✅ Added **AIPlayerStateModel** (was referenced but not defined)
+- ✅ Added **VelocityX/VelocityY** properties to SunStateModel and PlanetStateModel
+- ✅ Fixed SolarSystemState relationships to show correct hierarchy
+
+### Added Missing Components
+- ✅ **8 Additional Event Classes**: GameLoadedEvent, GameSavedEvent, ResearchCompletedEvent, DayAdvancedEvent, TimeAccelerationChangedEvent, SceneChangeRequestedEvent, UIRefreshRequestedEvent, ErrorOccurredEvent
+- ✅ **GameDataContext**: The EF Core DbContext
+- ✅ **AsteroidBeltState**: For future extensibility
+- ✅ **Type System**: ResearchItem, IGameResource, Energy, Minerals classes
+- ✅ **ErrorInfo**: Error information class
+- ✅ Added HandleSceneLoadError to ErrorHandler
+
+### Improved Documentation
+- Clear sections for each system component
+- Complete event hierarchy showing all 11 event types
+- Proper database model relationships
+- Type system representation
