@@ -28,9 +28,20 @@ namespace Core.Services
             _contextFactory = contextFactory;
         }
 
+        public override void _ExitTree()
+        {
+            ClearSolarSystem();
+            base._ExitTree();
+        }
+
         /// <summary>
         /// Load and instantiate solar system from database
         /// </summary>
+        /// <param name="solarSystemStateId">The unique ID of the solar system state to load</param>
+        /// <param name="container">The Node2D container to add solar system nodes to</param>
+        /// <returns>The container Node2D with instantiated solar system nodes</returns>
+        /// <exception cref="InvalidOperationException">Thrown when context factory is not initialized</exception>
+        /// <exception cref="KeyNotFoundException">Thrown when solar system state is not found in database</exception>
         public async Task<Node2D> LoadAndInstantiateSolarSystemAsync(
             Guid solarSystemStateId,
             Node2D container
@@ -38,8 +49,9 @@ namespace Core.Services
         {
             if (_contextFactory == null)
             {
-                GD.PrintErr("ContextFactory not initialized!");
-                return null;
+                string message = "ContextFactory not initialized!";
+                GD.PrintErr(message);
+                throw new InvalidOperationException(message);
             }
 
             _solarSystemContainer = container;
@@ -55,8 +67,9 @@ namespace Core.Services
 
             if (solarSystemState == null)
             {
-                GD.PrintErr($"Solar system state {solarSystemStateId} not found!");
-                return null;
+                string message = $"Solar system state {solarSystemStateId} not found!";
+                GD.PrintErr(message);
+                throw new KeyNotFoundException(message);
             }
 
             // Clear existing nodes
@@ -93,6 +106,8 @@ namespace Core.Services
         /// <summary>
         /// Save current solar system scene state back to database
         /// </summary>
+        /// <param name="solarSystemStateId">The unique ID of the solar system state to update</param>
+        /// <exception cref="InvalidOperationException">Thrown when context factory is not initialized</exception>
         public async Task SaveSolarSystemStateAsync(Guid solarSystemStateId)
         {
             if (_contextFactory == null)
@@ -146,6 +161,9 @@ namespace Core.Services
         /// <summary>
         /// Generate and instantiate a new solar system based on settings
         /// </summary>
+        /// <param name="settings">Game settings containing generation parameters</param>
+        /// <param name="container">The Node2D container to add solar system nodes to</param>
+        /// <returns>The generated solar system state model</returns>
         public async Task<SolarSystemState> GenerateAndInstantiateNewSolarSystemAsync(
             GameSettingsModel settings,
             Node2D container
@@ -190,16 +208,20 @@ namespace Core.Services
         /// <summary>
         /// Get reference to the sun node
         /// </summary>
+        /// <returns>The Sun node, or null if not instantiated</returns>
         public Sun GetSun() => _sunNode;
 
         /// <summary>
         /// Get references to all planet nodes
         /// </summary>
+        /// <returns>A new list containing references to all planet nodes</returns>
         public List<Planet> GetPlanets() => new List<Planet>(_planetNodes);
 
         /// <summary>
         /// Get a specific planet by index
         /// </summary>
+        /// <param name="index">Zero-based index of the planet</param>
+        /// <returns>The Planet node at the specified index, or null if index is out of range</returns>
         public Planet GetPlanet(int index)
         {
             if (index >= 0 && index < _planetNodes.Count)
@@ -212,6 +234,7 @@ namespace Core.Services
         /// <summary>
         /// Get planet count
         /// </summary>
+        /// <returns>The number of instantiated planets</returns>
         public int GetPlanetCount() => _planetNodes.Count;
     }
 }

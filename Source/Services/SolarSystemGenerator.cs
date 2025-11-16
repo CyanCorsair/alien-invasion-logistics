@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Core.Database.Models;
 using Core.GameObjects;
+using AlienInvasionLogistics.Constants;
 
 namespace Core.Services
 {
@@ -42,6 +43,8 @@ namespace Core.Services
         /// <summary>
         /// Generate solar system state from game settings
         /// </summary>
+        /// <param name="settings">Game settings containing star type and planet count</param>
+        /// <returns>A new solar system state with generated sun and planets</returns>
         public SolarSystemState GenerateSolarSystemState(GameSettingsModel settings)
         {
             var solarSystemState = new SolarSystemState { Id = Guid.NewGuid() };
@@ -107,15 +110,18 @@ namespace Core.Services
             };
 
             // Generate planets at increasing orbital radii
-            float baseOrbitalRadius = 150f; // Starting orbital distance
-            float orbitalRadiusIncrement = 100f; // Distance between orbits
+            float baseOrbitalRadius = SolarSystemConstants.BASE_ORBITAL_RADIUS; // Starting orbital distance
+            float orbitalRadiusIncrement = SolarSystemConstants.ORBITAL_RADIUS_INCREMENT; // Distance between orbits
 
             for (int i = 0; i < numberOfPlanets; i++)
             {
                 float orbitalRadius = baseOrbitalRadius + (i * orbitalRadiusIncrement);
 
                 // Add some randomness to orbital radius
-                orbitalRadius += (float)(_random.NextDouble() * 50 - 25);
+                orbitalRadius += (float)(
+                    _random.NextDouble() * SolarSystemConstants.ORBITAL_RADIUS_VARIANCE
+                    - SolarSystemConstants.ORBITAL_RADIUS_VARIANCE / 2
+                );
 
                 var planetState = GeneratePlanetState(
                     i,
@@ -153,7 +159,10 @@ namespace Core.Services
 
             // Calculate orbital velocity (Kepler's laws simplified)
             // Velocity decreases with orbital radius
-            float orbitalSpeed = 50f / Mathf.Sqrt(orbitalRadius);
+            float orbitalSpeed =
+                orbitalRadius > SolarSystemConstants.MIN_ORBITAL_RADIUS
+                    ? SolarSystemConstants.ORBITAL_SPEED_BASE / Mathf.Sqrt(orbitalRadius)
+                    : SolarSystemConstants.DEFAULT_ORBITAL_SPEED;
 
             // Velocity is perpendicular to radius (tangent to orbit)
             float velX = -orbitalSpeed * Mathf.Sin(initialAngle);
@@ -206,6 +215,8 @@ namespace Core.Services
         /// <summary>
         /// Instantiate Sun Node2D from state
         /// </summary>
+        /// <param name="sunState">The sun state model containing position, velocity, and mass data</param>
+        /// <returns>A new Sun node with properties set from the state model</returns>
         public Sun InstantiateSunFromState(SunStateModel sunState)
         {
             var sun = new Sun
@@ -223,6 +234,9 @@ namespace Core.Services
         /// <summary>
         /// Instantiate Planet Node2D from state
         /// </summary>
+        /// <param name="planetState">The planet state model containing position, velocity, and mass data</param>
+        /// <param name="orbitCenter">The center point of the planet's orbit (typically the sun's position)</param>
+        /// <returns>A new Planet node with properties and orbital parameters set from the state model</returns>
         public Planet InstantiatePlanetFromState(PlanetStateModel planetState, Vector2 orbitCenter)
         {
             var planet = new Planet
@@ -243,7 +257,8 @@ namespace Core.Services
 
             // Calculate orbital speed from velocity
             Vector2 velocity = new Vector2(planetState.VelocityX, planetState.VelocityY);
-            planet.OrbitalSpeed = velocity.Length() / planet.OrbitalRadius;
+            planet.OrbitalSpeed =
+                planet.OrbitalRadius > 1f ? velocity.Length() / planet.OrbitalRadius : 1f;
 
             return planet;
         }
@@ -251,6 +266,9 @@ namespace Core.Services
         /// <summary>
         /// Save Node2D state back to state model
         /// </summary>
+        /// <param name="sun">The Sun node to save state from</param>
+        /// <param name="existingState">Optional existing state model to update. If null, creates a new one</param>
+        /// <returns>The updated or newly created sun state model</returns>
         public SunStateModel SaveSunState(Sun sun, SunStateModel existingState = null)
         {
             var state = existingState ?? new SunStateModel();
@@ -269,6 +287,9 @@ namespace Core.Services
         /// <summary>
         /// Save Planet Node2D state back to state model
         /// </summary>
+        /// <param name="planet">The Planet node to save state from</param>
+        /// <param name="existingState">Optional existing state model to update. If null, creates a new one</param>
+        /// <returns>The updated or newly created planet state model</returns>
         public PlanetStateModel SavePlanetState(
             Planet planet,
             PlanetStateModel existingState = null
