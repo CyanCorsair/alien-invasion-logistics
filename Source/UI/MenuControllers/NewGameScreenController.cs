@@ -49,7 +49,8 @@ public partial class NewGameScreenController : Panel
     private const int DEFAULT_PLANETS = 5;
 
     private const StarType DEFAULT_STAR_TYPE = StarType.MainSequence;
-    private const StartingResourcesMultiplier DEFAULT_STARTING_RESOURCES = StartingResourcesMultiplier.Medium;
+    private const StartingResourcesMultiplier DEFAULT_STARTING_RESOURCES =
+        StartingResourcesMultiplier.Medium;
 
     string _playerName = "Player";
     double numberOfPlanets = DEFAULT_PLANETS;
@@ -94,25 +95,29 @@ public partial class NewGameScreenController : Panel
 
     private string PlayerName
     {
-        get
-        {
-            return _playerName;
-        }
-        set
-        {
-            _playerName = value;
-        }
+        get { return _playerName; }
+        set { _playerName = value; }
     }
 
     public override void _Ready()
-    { 
-        playerNameControl = GetNode<LineEdit>("SettingsPanel/BasicSettings/PlayerNameContainer/PlayerNameTextField");
+    {
+        playerNameControl = GetNode<LineEdit>(
+            "SettingsPanel/BasicSettings/PlayerNameContainer/PlayerNameTextField"
+        );
 
-        planetCountControl = GetNode<HSlider>("SettingsPanel/BasicSettings/PlanetCountContainer/PlanetCountRange");
-        planetCountText = GetNode<RichTextLabel>("SettingsPanel/BasicSettings/PlanetCountContainer/PlanetCountText");
+        planetCountControl = GetNode<HSlider>(
+            "SettingsPanel/BasicSettings/PlanetCountContainer/PlanetCountRange"
+        );
+        planetCountText = GetNode<RichTextLabel>(
+            "SettingsPanel/BasicSettings/PlanetCountContainer/PlanetCountText"
+        );
 
-        starTypeControl = GetNode<OptionButton>("SettingsPanel/BasicSettings/StarTypeCobtainer/StarTypeDropdown/StarTypeOptions");
-        startingResourcesMultiplierControl = GetNode<OptionButton>("SettingsPanel/BasicSettings/StartingResourcesContainer/StartingResourcesDropdown/StartingResourceOptions");
+        starTypeControl = GetNode<OptionButton>(
+            "SettingsPanel/BasicSettings/StarTypeCobtainer/StarTypeDropdown/StarTypeOptions"
+        );
+        startingResourcesMultiplierControl = GetNode<OptionButton>(
+            "SettingsPanel/BasicSettings/StartingResourcesContainer/StartingResourcesDropdown/StartingResourceOptions"
+        );
 
         StartGameButton = GetNode<Button>("ControlsPanel/ControlsContainer/StartGameButton");
         CancelSetupButton = GetNode<Button>("ControlsPanel/ControlsContainer/CancelStartButton");
@@ -125,10 +130,7 @@ public partial class NewGameScreenController : Panel
         CancelSetupButton.Pressed += OnCancelSetup;
     }
 
-    public override void _Process(double delta)
-    {
-        
-    }
+    public override void _Process(double delta) { }
 
     public override void _ExitTree()
     {
@@ -144,7 +146,9 @@ public partial class NewGameScreenController : Panel
     {
         if (newPlanetCount < MIN_PLANETS || newPlanetCount > MAX_PLANETS)
         {
-            GD.PrintErr($"Planet count {newPlanetCount} is out of bounds. It must be between {MIN_PLANETS} and {MAX_PLANETS}.");
+            GD.PrintErr(
+                $"Planet count {newPlanetCount} is out of bounds. It must be between {MIN_PLANETS} and {MAX_PLANETS}."
+            );
             return;
         }
         numberOfPlanets = newPlanetCount;
@@ -159,7 +163,8 @@ public partial class NewGameScreenController : Panel
 
     private void OnStartingResourcesMultiplierChanged(long index)
     {
-        startingResourcesMultiplier = (StartingResourcesMultiplier)startingResourcesMultiplierControl.Selected;
+        startingResourcesMultiplier = (StartingResourcesMultiplier)
+            startingResourcesMultiplierControl.Selected;
     }
 
     private async void OnStartNewGame()
@@ -167,33 +172,36 @@ public partial class NewGameScreenController : Panel
         PlayerName = playerNameControl.Text;
         numberOfPlanets = planetCountControl.Value;
         starType = (StarType)starTypeControl.Selected;
-        startingResourcesMultiplier = (StartingResourcesMultiplier)startingResourcesMultiplierControl.Selected;
+        startingResourcesMultiplier = (StartingResourcesMultiplier)
+            startingResourcesMultiplierControl.Selected;
 
-        GD.Print($"Starting new game with {numberOfPlanets} planets, star type {starType}, starting resources: energy {StartingEnergyResources} | mineral {StartingMineralResources}, player name {PlayerName}");
+        GD.Print(
+            $"Starting new game with {numberOfPlanets} planets, star type {starType}, starting resources: energy {StartingEnergyResources} | mineral {StartingMineralResources}, player name {PlayerName}"
+        );
 
         StartingResearch startingResearch = new();
-        StartingResources startingResources = new()
-        {
-            energy = StartingEnergyResources,
-            minerals = StartingMineralResources
-        };
+        StartingResources startingResources =
+            new() { energy = StartingEnergyResources, minerals = StartingMineralResources };
 
-        GameSettings settings = new()
-        {
-            NumberOfPlanets = (int)numberOfPlanets,
-            StarType = (int)starType,
-            StartingResources = startingResources,
-            StartingResearch = startingResearch,
-            PlayerName = PlayerName
-        };
+        GameSettings settings =
+            new()
+            {
+                NumberOfPlanets = (int)numberOfPlanets,
+                StarType = (int)starType,
+                StartingResources = startingResources,
+                StartingResearch = startingResearch,
+                PlayerName = PlayerName
+            };
 
         try
         {
             GD.Print("Creating new game data");
             var gameDataService = ServiceContainer.GetRequiredService<IGameDataService>();
 
+#if DEBUG
             // Clear database for new game (TODO: remove in production)
             await gameDataService.ClearDatabaseAsync();
+#endif
 
             // Create new game asynchronously
             await gameDataService.CreateNewGameAsync(settings);

@@ -121,6 +121,14 @@ namespace Core.Database
         {
             await using var context = _contextFactory.CreateDbContext();
 
+            Guid saveGuid = Guid.Empty;
+
+            if (Guid.TryParse(saveId, out saveGuid) == false)
+            {
+                GD.PrintErr("Invalid save ID format");
+                return null;
+            }
+
             var save = await context.GameSaves.FindAsync(Guid.Parse(saveId));
             if (save == null)
             {

@@ -54,7 +54,7 @@ public partial class MainGame : Node
                 return;
             }
 
-            if (CurrentMode == GameMode.Strat)
+            if (newMode == GameMode.Strat)
             {
                 LoadStratMode();
             }
@@ -65,7 +65,11 @@ public partial class MainGame : Node
         }
         catch (Exception ex)
         {
-            ErrorHandler.LogError($"Error swapping game mode to {newMode}", ex, ErrorSeverity.Error);
+            ErrorHandler.LogError(
+                $"Error swapping game mode to {newMode}",
+                ex,
+                ErrorSeverity.Error
+            );
         }
     }
 
@@ -89,7 +93,9 @@ public partial class MainGame : Node
             PackedScene stratWorldScene = GD.Load<PackedScene>(STRAT_WORLD_SCENE_PATH);
             if (stratWorldScene == null)
             {
-                throw new InvalidOperationException($"Failed to load scene: {STRAT_WORLD_SCENE_PATH}");
+                throw new InvalidOperationException(
+                    $"Failed to load scene: {STRAT_WORLD_SCENE_PATH}"
+                );
             }
             activeWorld = stratWorldScene.Instantiate<Node2D>();
             AddChild(activeWorld);
@@ -120,7 +126,9 @@ public partial class MainGame : Node
             PackedScene tacWorldScene = GD.Load<PackedScene>(TAC_WORLD_SCENE_PATH);
             if (tacWorldScene == null)
             {
-                throw new InvalidOperationException($"Failed to load scene: {TAC_WORLD_SCENE_PATH}");
+                throw new InvalidOperationException(
+                    $"Failed to load scene: {TAC_WORLD_SCENE_PATH}"
+                );
             }
             activeWorld = tacWorldScene.Instantiate<Node2D>();
             AddChild(activeWorld);

@@ -7,7 +7,7 @@ namespace Core.Types.Research
     public class ResearchItem
     {
         [Key]
-        public Guid Id { get; set; } = new Guid();
+        public Guid Id { get; set; } = Guid.NewGuid();
         public string Name { get; set; }
         public string DisplayName { get; set; }
         public string Description { get; set; }
