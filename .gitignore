@@ -1,6 +1,7 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+*.uid
 
 # Visual Studio / Rider
 .vs/
@@ -80,3 +81,5 @@ Desktop.ini
 
 # Generic
 CODE_REVIEW_*
+.claude
+Assets
