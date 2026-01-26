@@ -1,35 +1,28 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Core.Interfaces;
+using AlienInvasionLogistics.Source.Interfaces;
 using Godot;
 
-namespace Core.Types.Resource
+namespace AlienInvasionLogistics.Source.Types;
+
+public enum ResourceTypes
 {
-    public enum RESOURCE_TYPES
-    {
-        ENERGY,
-        MINERALS
-    }
+    Energy,
+    Minerals
+}
 
-    public struct StartingResources
-    {
-        public int minerals;
-        public int energy;
-    }
+public class StartingResources
+{
+    public int Minerals;
+    public int Energy;
+}
 
-    public class Minerals : IGameResource
-    {
-        public string Name { get; set; } = "Minerals";
-        public Sprite2D Icon { get; set; }
-    }
+public class Minerals : IGameResource
+{
+    public string Name { get; set; } = "Minerals";
+    public Sprite2D Icon { get; set; }
+}
 
-    public class Energy : IGameResource
-    {
-        public string Name { get; set; } = "Energy";
-        public Sprite2D Icon { get; set; }
-
-    }
+public class Energy : IGameResource
+{
+    public string Name { get; set; } = "Energy";
+    public Sprite2D Icon { get; set; }
 }

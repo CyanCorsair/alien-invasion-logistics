@@ -1,24 +1,24 @@
-using Core.GameObjects;
-using Core.Interfaces;
-using Godot;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+using AlienInvasionLogistics.Source.Interfaces;
+using Godot;
 
-namespace Core.Types.SolarSystem
+namespace AlienInvasionLogistics.Source.Types;
+
+public enum StarSize
 {
-    public class PlanetarySystem
-    {
-        [Key]
-        public Guid Id { get; set; } = new Guid();
-        public string Name { get; set; } = "New Planetary System";
-        public List<Planet> Planets { get; set; } = new List<Planet>();
-    }
+    Dwarf,
+    Medium,
+    Giant,
+    HyperGiant
+}
 
-    public class AsteroidBelt
-    {
-        [Key]
-        public Guid Id { get; set; } = new Guid();
-        public string Name { get; set; } = "New Asteroid Belt";
-    }
+public class Star : IStellarBody
+{
+    public Color StarColor { get; set; }
+    public StarSize StarSize { get; set; }
+    public string DisplayName { get; set; }
+    public Vector2 Location2D { get; set; }
+    public Vector2 Velocity2D { get; set; }
+    public float Mass { get; set; }
 }

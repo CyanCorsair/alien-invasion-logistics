@@ -1,13 +1,11 @@
+using AlienInvasionLogistics.Source.Database.Models;
 using Godot;
-using System;
-using Core.Controllers.UI.NewGameScreen;
-using Core.Database.Models;
 
-namespace Core.Controllers;
+namespace AlienInvasionLogistics.Source;
 
-public partial class SolarSystemController() : Node2D
+public partial class SolarSystemController : Node2D
 {
-    private SolarSystemState _solarSystemState;
+    private SolarSystem _solarSystem;
 
     public override void _Ready()
     {
@@ -15,5 +13,6 @@ public partial class SolarSystemController() : Node2D
     }
 
     private void GenerateSolarSystem()
-    { }
+    {
+    }
 }

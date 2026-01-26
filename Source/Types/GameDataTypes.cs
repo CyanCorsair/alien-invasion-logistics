@@ -1,37 +1,17 @@
 using System;
 using System.Collections.Generic;
 
-namespace Core.Types;
+namespace AlienInvasionLogistics.Source.Types;
 
-public struct PlayerStateData
+public enum GameDifficulty
 {
-    public Guid StateId;
+    Easy,
+    Medium,
+    Hard
 }
 
-public struct SolarSystemStateData
-{
-    public Guid StateId;
-}
+public interface IGameObject {}
 
-public struct GameSaveData
-{
-    public string SaveName;
-    public DateTime SaveTime;
-    public Guid GameDataId;
-    public int InGameDay;
-    public int GameMode; // 0 = Strat, 1 = Tac
-}
+public interface IGameObjectDto {}
 
-public struct GameStateData
-{
-    public Guid StateId;
-    public int CurrentInGameDay;
-    public float CurrentTimeAcceleration;
-    public int GameMode; // 0 = Strat, 1 = Tac
-    public List<Guid> AIPlayerStateIds;
-    public Guid PlayerStateId;
-    public PlayerStateData HumanPlayerState;
-    public List<PlayerStateData> AIPlayerStates;
-    public Guid SolarSystemStateId;
-    public SolarSystemStateData SolarSystemState;
-}
+public interface IBlueprint {}

@@ -1,29 +1,43 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using AlienInvasionLogistics.Source.Types;
+using Microsoft.EntityFrameworkCore;
 
-namespace Core.Database.Models
+namespace AlienInvasionLogistics.Source.Database.Models;
+
+public class Player
 {
-    public class PlayerStateModel
-    {
-        [Key]
-        public Guid Id { get; set; } = Guid.NewGuid();
+    [Key] public Guid Id { get; set; } = Guid.NewGuid();
 
-        // Owned types - no separate table needed, stored inline
-        [Required]
-        public ResourcesState ResourcesState { get; set; } = new ResourcesState();
-        [Required]
-        public ResearchState ResearchState { get; set; } = new ResearchState();
-    }
+    [Required] public bool IsHuman { get; set; } = false;
 
-    public class AIPlayerStateModel
-    {
-        [Key]
-        public Guid Id { get; set; } = Guid.NewGuid();
+    [Required] [MaxLength(128)] public string Name { get; set; } = "New Player";
 
-        // Owned types - no separate table needed, stored inline
-        [Required]
-        public ResourcesState ResourcesState { get; set; } = new ResourcesState();
-        [Required]
-        public ResearchState ResearchState { get; set; } = new ResearchState();
-    }
+    [Required] public Guid GameSessionId { get; set; }
+
+    [Required] public GameSession GameSession { get; set; }
+
+    public Guid NationId { get; set; }
+
+    public Nation Nation { get; set; }
+    
+    public ResearchState ResearchState { get; set; }
+
+    public ResourcesState ResourceState { get; set; } = new();
+}
+
+[Owned]
+public class ResearchState
+{
+    public List<ResearchItem> FinishedResearch { get; set; }
+    public ResearchItem CurrentResearch { get; set; }
+    public List<ResearchItem> ResearchQueue { get; set; }
+    public List<ResearchItem> KnownResearch { get; set; }
+}
+
+[Owned]
+public class ResourcesState
+{
+    public List<GameResource> Resources { get; set; }
 }

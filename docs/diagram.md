@@ -1,4 +1,267 @@
-# Alien Invasion Logistics - Class Diagram
+# Alien Invasion Logistics - Architecture Diagrams
+
+## Database Entity-Relationship Diagram (Current Schema)
+
+```mermaid
+erDiagram
+    %% ============================================
+    %% CORE GAME AGGREGATE
+    %% ============================================
+
+    GameSession ||--|| HumanPlayer : "has one"
+    GameSession ||--o{ AiPlayerModel : "has many"
+    GameSession ||--|| StrategicWorldState : "contains"
+
+    GameSession {
+        uuid Id PK
+        string SaveName
+        int InGameDay
+        datetime CreatedAt
+        datetime LastSavedAt
+        int NumberOfAiPlayers
+        int NumberOfPlanets
+        int StarType
+        int StartingMinerals
+        int StartingEnergy
+    }
+
+    %% ============================================
+    %% PLAYER HIERARCHY (Table-Per-Hierarchy)
+    %% ============================================
+
+    Player ||--|| Nation : "controls"
+    Player ||--|| GameSession : "belongs to"
+    Player ||--o{ Research : "owns (composite)"
+    Player ||--o{ GameResource : "owns (composite)"
+
+    Player {
+        uuid Id PK
+        string Name
+        string PlayerType "Discriminator: Human or AI"
+        uuid GameSessionId FK
+        uuid NationId FK
+    }
+
+    HumanPlayer {
+        string PlayerType "= Human"
+    }
+
+    AiPlayerModel {
+        string PlayerType "= AI"
+    }
+
+    Player ||--|{ HumanPlayer : "inherits (TPH)"
+    Player ||--|{ AiPlayerModel : "inherits (TPH)"
+
+    %% ============================================
+    %% STRATEGIC WORLD STATE
+    %% ============================================
+
+    StrategicWorldState ||--|| SolarSystem : "contains"
+    StrategicWorldState ||--o{ Nation : "has many"
+    StrategicWorldState ||--o{ Player : "tracks"
+
+    StrategicWorldState {
+        uuid Id PK
+        string Name
+        uuid SolarSystemId FK
+        uuid[] NationIds
+        uuid[] PlayerIds
+    }
+
+    %% ============================================
+    %% NATION SYSTEM
+    %% ============================================
+
+    Nation ||--o{ CelestialBody : "occupies"
+
+    Nation {
+        uuid Id PK
+        string Name
+        string FlagColorHex
+        uuid StrategicWorldStateId FK
+        uuid PlayerId FK
+        uuid[] OccupiedCelestialBodyIds
+    }
+
+    %% ============================================
+    %% SOLAR SYSTEM HIERARCHY
+    %% ============================================
+
+    SolarSystem ||--|| CelestialBody : "has central mass (Star)"
+    SolarSystem ||--o{ PlanetarySystem : "contains"
+
+    SolarSystem {
+        uuid Id PK
+        string Name
+        uuid CentralMassId FK "The Star"
+        uuid[] PlanetarySystemIds
+    }
+
+    PlanetarySystem ||--|| CelestialBody : "has central mass (Planet)"
+    PlanetarySystem ||--o{ CelestialBody : "contains bodies (Moons)"
+    PlanetarySystem ||--o{ PlanetarySystem : "contains subsystems (recursive)"
+
+    PlanetarySystem {
+        uuid Id PK
+        string Name
+        uuid SolarSystemId FK
+        uuid CentralMassId FK "Primary Planet"
+        uuid[] CelestialBodyIds "Moons, etc"
+        uuid[] PlanetarySystemIds "Sub-systems"
+    }
+
+    %% ============================================
+    %% CELESTIAL BODIES
+    %% ============================================
+
+    CelestialBody ||--o{ Orbit : "has orbits (owned)"
+    CelestialBody ||--o{ LandingSite : "has landing sites (owned)"
+    CelestialBody ||--o{ GameResource : "has resource deposits (owned)"
+    CelestialBody ||--o| CelestialBody : "orbits parent"
+    CelestialBody ||--o{ CelestialBody : "has children"
+    CelestialBody ||--o{ CelestialBody : "has siblings (binary)"
+
+    CelestialBody {
+        uuid Id PK
+        string Name
+        enum BodyType "Star, Planet, Moon, etc"
+        float PositionX
+        float PositionY
+        float Mass
+        float Radius
+        float OrbitalPeriod
+        float SemiMajorAxis
+        float Eccentricity
+        int SunlightLevel
+        uuid ParentBodyId FK "nullable"
+        uuid ChildBodyIds "nullable"
+        uuid SiblingBodyIds "nullable"
+        uuid PlanetarySystemId FK
+    }
+
+    %% ============================================
+    %% ORBITAL ZONES (Owned Entities)
+    %% ============================================
+
+    Orbit ||--o{ StaticArtificialObject : "contains"
+    Orbit ||--o{ MobileArtificialObject : "contains"
+
+    Orbit {
+        string Name "Owned by CelestialBody"
+        int MaxStationaryArtificialObjects
+        int MaxMobileArtificialObjects
+        int CurrentStationaryArtificialObjects
+        int CurrentMobileArtificialObjects
+        uuid[] StaticArtificialObjectIds
+        uuid[] MobileArtificialObjectIds
+    }
+
+    LandingSite ||--o{ StaticArtificialObject : "contains"
+    LandingSite ||--o{ MobileArtificialObject : "contains"
+
+    LandingSite {
+        string Name "Owned by CelestialBody"
+        int MaxStationaryArtificialObjects
+        int MaxMobileArtificialObjects
+        int CurrentStationaryArtificialObjects
+        int CurrentMobileArtificialObjects
+        uuid[] StaticArtificialObjectIds
+        uuid[] MobileArtificialObjectIds
+    }
+
+    %% ============================================
+    %% ARTIFICIAL OBJECTS
+    %% ============================================
+
+    BaseArtificialObject ||--|| Nation : "owned by"
+
+    BaseArtificialObject {
+        uuid Id PK
+        string Name
+        uuid OwningNationId FK
+    }
+
+    StaticArtificialObject {
+        string Type "Stations, Buildings"
+    }
+
+    MobileArtificialObject {
+        string Type "Ships, Probes"
+    }
+
+    BaseArtificialObject ||--|{ StaticArtificialObject : "inherits"
+    BaseArtificialObject ||--|{ MobileArtificialObject : "inherits"
+
+    %% ============================================
+    %% OWNED VALUE OBJECTS
+    %% ============================================
+
+    GameResource {
+        string Name "Owned entity - no separate table"
+    }
+
+    Research {
+        string Name "Owned entity - no separate table"
+        string Description
+        enum ResearchState "None, Queued, InProgress, Completed"
+    }
+```
+
+## Database Schema Notes
+
+### Aggregate Roots
+- **GameSession**: The primary aggregate root. All game data branches from here.
+- Loading a GameSession loads the entire game state through navigation properties.
+
+### Table-Per-Hierarchy (TPH) Inheritance
+- **Player** uses TPH with discriminator column `PlayerType`
+  - Values: "Human" or "AI"
+  - Both stored in same table with a discriminator
+
+- **BaseArtificialObject** uses TPH for Static vs Mobile objects
+
+### Owned Entities (No Separate Tables)
+- **GameResource**: Stored inline with parent (Player or CelestialBody)
+- **Research**: Stored inline with Player table
+- **Orbit**: Stored inline with CelestialBody table as JSON
+- **LandingSite**: Stored inline with CelestialBody table as JSON
+
+### Self-Referencing Relationships
+- **CelestialBody**:
+  - `ParentBodyId`: Moons reference their planet, planets reference their star
+  - `ChildBodies`: Collection of orbiting bodies
+  - `SiblingBodies`: For binary systems or co-orbital bodies
+
+- **PlanetarySystem**: Can contain sub-systems (recursive)
+
+### Current Implementation Status
+- ✅ **Fully Implemented**: Solar system hierarchy (SolarSystem, PlanetarySystem, CelestialBody)
+- 🚧 **Placeholder**: Artificial objects, detailed resources, research
+- 📋 **Planned**: Tactical world state (commented out in GameSession)
+
+### Known Schema Issues
+
+⚠️ **WARNING: Schema Mismatches Detected**
+
+1. **Player.Resources mismatch** (Source/Database/Models/PlayerModel.cs:23 vs GameDataContext.cs:28)
+   - Model defines: `List<GameResource> Resources` (collection)
+   - Context configures: `.OwnsOne(p => p.Resources)` (single entity)
+   - **Impact**: Runtime error - configuration doesn't match model
+
+2. **Nation.OccupiedCelestialBodies typo** (GameDataContext.cs:116)
+   - Context refers to: `OwnedCelestialBodys` (typo + different property name)
+   - Model defines: `OccupiedCelestialBodies`
+   - **Impact**: Relationship not properly configured
+
+3. **PlanetarySystem missing FK configuration**
+   - Model has recursive `PlanetarySystems` collection
+   - No foreign key configured in GameDataContext for this relationship
+   - **Impact**: May cause issues with self-referencing hierarchy
+
+---
+
+## Class Diagram (Legacy - Needs Update)
 
 ```mermaid
 classDiagram

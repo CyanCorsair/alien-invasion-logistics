@@ -17,8 +17,9 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-ErrorHandler="*res://Source/Utilities/ErrorHandler.cs"
 ServiceContainer="*res://Source/ServiceContainer.cs"
+ErrorHandler="*res://Source/Utilities/ErrorHandler.cs"
+GameEventBus="*res://Source/Events/GameEventBus.cs"
 GameDataService="*res://Source/GameDataService.cs"
 
 [display]

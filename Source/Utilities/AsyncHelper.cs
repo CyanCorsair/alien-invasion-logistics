@@ -1,59 +1,52 @@
-using Godot;
 using System;
 using System.Threading.Tasks;
+using Godot;
 
-namespace Core.Utilities
+namespace AlienInvasionLogistics.Source.Utilities;
+
+/// <summary>
+///     Helper utilities for async operations in Godot
+/// </summary>
+public static class AsyncHelper
 {
     /// <summary>
-    /// Helper utilities for async operations in Godot
+    ///     Executes an async task and calls a callback on completion
+    ///     Safe to call from Godot's main thread
     /// </summary>
-    public static class AsyncHelper
+    public static async void RunAsync(Func<Task> asyncMethod, Action onComplete = null,
+        Action<Exception> onError = null)
     {
-        /// <summary>
-        /// Executes an async task and calls a callback on completion
-        /// Safe to call from Godot's main thread
-        /// </summary>
-        public static async void RunAsync(Func<Task> asyncMethod, Action onComplete = null, Action<Exception> onError = null)
+        try
         {
-            try
-            {
-                await asyncMethod();
-                onComplete?.Invoke();
-            }
-            catch (Exception ex)
-            {
-                if (onError != null)
-                {
-                    onError(ex);
-                }
-                else
-                {
-                    GD.PrintErr($"Unhandled async exception: {ex}");
-                }
-            }
+            await asyncMethod();
+            onComplete?.Invoke();
         }
-
-        /// <summary>
-        /// Executes an async task with a return value
-        /// </summary>
-        public static async void RunAsync<T>(Func<Task<T>> asyncMethod, Action<T> onComplete, Action<Exception> onError = null)
+        catch (Exception ex)
         {
-            try
-            {
-                var result = await asyncMethod();
-                onComplete?.Invoke(result);
-            }
-            catch (Exception ex)
-            {
-                if (onError != null)
-                {
-                    onError(ex);
-                }
-                else
-                {
-                    GD.PrintErr($"Unhandled async exception: {ex}");
-                }
-            }
+            if (onError != null)
+                onError(ex);
+            else
+                GD.PrintErr($"Unhandled async exception: {ex}");
+        }
+    }
+
+    /// <summary>
+    ///     Executes an async task with a return value
+    /// </summary>
+    public static async void RunAsync<T>(Func<Task<T>> asyncMethod, Action<T> onComplete,
+        Action<Exception> onError = null)
+    {
+        try
+        {
+            var result = await asyncMethod();
+            onComplete?.Invoke(result);
+        }
+        catch (Exception ex)
+        {
+            if (onError != null)
+                onError(ex);
+            else
+                GD.PrintErr($"Unhandled async exception: {ex}");
         }
     }
 }

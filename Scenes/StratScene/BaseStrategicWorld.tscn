@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://bcxyl3kd1igpy"]
+
+[ext_resource type="PackedScene" uid="uid://cqn0v4nsugf8h" path="res://Scenes/GameScreen/StratMapUI.tscn" id="1_dthaw"]
+
+[node name="BaseStrategicWorld" type="Node2D"]
+
+[node name="SubViewport" type="SubViewport" parent="."]
+
+[node name="StratMapUi" parent="SubViewport" instance=ExtResource("1_dthaw")]

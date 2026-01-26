@@ -1,43 +1,62 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <IsPackable>false</IsPackable>
-    <IsTestProject>true</IsTestProject>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>disable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+        <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="coverlet.collector" Version="6.0.2">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
-    <PackageReference Include="Moq" Version="4.20.72" />
-    <PackageReference Include="xunit" Version="2.9.2" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="FluentAssertions" Version="6.12.2" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.9" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.9" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.9" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="coverlet.collector" Version="6.0.2">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.9" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1"/>
+        <PackageReference Include="Moq" Version="4.20.72"/>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+        <PackageReference Include="xunit" Version="2.9.3" />
+        <PackageReference Include="FluentAssertions" Version="6.12.2"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.9"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.9"/>
+        <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
 
-  <ItemGroup>
-    <Using Include="Xunit" />
-  </ItemGroup>
+    <!-- Link only to non-Godot source files -->
+    <ItemGroup>
+        <!-- Database Context and Models -->
+        <Compile Include="..\Source\Database\Contexts\GameDataContext.cs" Link="LinkedSource\Database\Contexts\GameDataContext.cs"/>
+        <Compile Include="..\Source\Database\Models\GameDataModel.cs" Link="LinkedSource\Database\Models\GameDataModel.cs"/>
+        <Compile Include="..\Source\Database\Models\PlayerModel.cs" Link="LinkedSource\Database\Models\PlayerModel.cs"/>
+        <Compile Include="..\Source\Database\Models\GameObjectStateModels.cs" Link="LinkedSource\Database\Models\GameObjectStateModels.cs"/>
+        <Compile Include="..\Source\Database\Models\Nation.cs" Link="LinkedSource\Database\Models\Nation.cs"/>
+        <Compile Include="..\Source\Database\Models\Resources.cs" Link="LinkedSource\Database\Models\Resources.cs"/>
+        <Compile Include="..\Source\Database\Models\Researches.cs" Link="LinkedSource\Database\Models\Researches.cs"/>
 
-  <!-- Link only to non-Godot database files -->
-  <ItemGroup>
-    <Compile Include="..\Source\Database\Contexts\GameDataContext.cs" Link="LinkedSource\Database\Contexts\GameDataContext.cs" />
-    <Compile Include="..\Source\Database\Models\GameDataModel.cs" Link="LinkedSource\Database\Models\GameDataModel.cs" />
-    <Compile Include="..\Source\Database\Models\PlayerModel.cs" Link="LinkedSource\Database\Models\PlayerModel.cs" />
-    <Compile Include="..\Source\Database\Models\GameObjectStateModels.cs" Link="LinkedSource\Database\Models\GameObjectStateModels.cs" />
-    <Compile Include="..\Source\Types\ResearchTypes.cs" Link="LinkedSource\Types\ResearchTypes.cs" />
-  </ItemGroup>
+        <!-- DTOs and Mapping Extensions -->
+        <Compile Include="..\Source\Database\Dtos\PlanetGameObjectDto.cs" Link="LinkedSource\Dtos\PlanetGameObjectDto.cs"/>
+        <Compile Include="..\Source\Database\Dtos\StarGameObjectDto.cs" Link="LinkedSource\Dtos\StarGameObjectDto.cs"/>
+        <Compile Include="..\Source\Database\Dtos\PlanetarySystemGameObjectDto.cs" Link="LinkedSource\Dtos\PlanetarySystemGameObjectDto.cs"/>
+        <Compile Include="..\Source\Database\Dtos\CelestialBodyMappingExtensions.cs" Link="LinkedSource\Dtos\CelestialBodyMappingExtensions.cs"/>
+
+        <!-- Note: ResearchTypes.cs is NOT linked - stub types are used instead -->
+
+        <!-- Interfaces and Factories -->
+        <Compile Include="..\Source\Database\IGameDataService.cs" Link="LinkedSource\Database\IGameDataService.cs"/>
+        <Compile Include="..\Source\Database\GameDataContextFactory.cs" Link="LinkedSource\Database\GameDataContextFactory.cs"/>
+
+        <!-- Events -->
+        <Compile Include="..\Source\Events\IEventBus.cs" Link="LinkedSource\Events\IEventBus.cs"/>
+        <Compile Include="..\Source\Events\IGameEvent.cs" Link="LinkedSource\Events\IGameEvent.cs"/>
+        <Compile Include="..\Source\Events\GameEvents.cs" Link="LinkedSource\Events\GameEvents.cs"/>
+    </ItemGroup>
 
 </Project>

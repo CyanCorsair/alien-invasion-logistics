@@ -1,191 +1,203 @@
 using System;
-using Core.Database.Models;
 
-namespace Core.Events
+namespace AlienInvasionLogistics.Source.Events;
+// ==================== Game Lifecycle Events ====================
+
+/// <summary>
+///     Published when a new game is created
+/// </summary>
+public class GameCreatedEvent : GameEvent
 {
-    // ==================== Game Lifecycle Events ====================
-
-    /// <summary>
-    /// Published when a new game is created
-    /// </summary>
-    public class GameCreatedEvent : GameEvent
+    public GameCreatedEvent(Guid gameDataId, string playerName)
     {
-        public Guid GameDataId { get; }
-        public string PlayerName { get; }
-
-        public GameCreatedEvent(Guid gameDataId, string playerName)
-        {
-            GameDataId = gameDataId;
-            PlayerName = playerName;
-        }
+        GameDataId = gameDataId;
+        PlayerName = playerName;
     }
 
-    /// <summary>
-    /// Published when a game is loaded from save
-    /// </summary>
-    public class GameLoadedEvent : GameEvent
-    {
-        public Guid GameDataId { get; }
-        public string SaveName { get; }
+    public Guid GameDataId { get; }
+    public string PlayerName { get; }
+}
 
-        public GameLoadedEvent(Guid gameDataId, string saveName)
-        {
-            GameDataId = gameDataId;
-            SaveName = saveName;
-        }
+/// <summary>
+///     Published when a game is loaded from save
+/// </summary>
+public class GameLoadedEvent : GameEvent
+{
+    public GameLoadedEvent(Guid gameDataId, string saveName)
+    {
+        GameDataId = gameDataId;
+        SaveName = saveName;
     }
 
-    /// <summary>
-    /// Published when a game is saved
-    /// </summary>
-    public class GameSavedEvent : GameEvent
-    {
-        public Guid SaveId { get; }
-        public string SaveName { get; }
+    public Guid GameDataId { get; }
+    public string SaveName { get; }
+}
 
-        public GameSavedEvent(Guid saveId, string saveName)
-        {
-            SaveId = saveId;
-            SaveName = saveName;
-        }
+/// <summary>
+///     Published when a game is saved
+/// </summary>
+public class GameSavedEvent : GameEvent
+{
+    public GameSavedEvent(Guid saveId, string saveName)
+    {
+        SaveId = saveId;
+        SaveName = saveName;
     }
 
-    // ==================== Resource Events ====================
+    public Guid SaveId { get; }
+    public string SaveName { get; }
+}
 
-    /// <summary>
-    /// Published when player resources change
-    /// </summary>
-    public class ResourcesChangedEvent : GameEvent
+// ==================== Resource Events ====================
+
+/// <summary>
+///     Published when player resources change
+/// </summary>
+public class ResourcesChangedEvent : GameEvent
+{
+    public ResourcesChangedEvent(
+        int energyStored,
+        int mineralsStored,
+        float energyIncome,
+        float mineralsIncome
+    )
     {
-        public int EnergyStored { get; }
-        public int MineralsStored { get; }
-        public float EnergyIncomeDaily { get; }
-        public float MineralsIncomeDaily { get; }
-
-        public ResourcesChangedEvent(
-            int energyStored,
-            int mineralsStored,
-            float energyIncome,
-            float mineralsIncome
-        )
-        {
-            EnergyStored = energyStored;
-            MineralsStored = mineralsStored;
-            EnergyIncomeDaily = energyIncome;
-            MineralsIncomeDaily = mineralsIncome;
-        }
+        EnergyStored = energyStored;
+        MineralsStored = mineralsStored;
+        EnergyIncomeDaily = energyIncome;
+        MineralsIncomeDaily = mineralsIncome;
     }
 
-    // ==================== Research Events ====================
+    public int EnergyStored { get; }
+    public int MineralsStored { get; }
+    public float EnergyIncomeDaily { get; }
+    public float MineralsIncomeDaily { get; }
+}
 
-    /// <summary>
-    /// Published when research is started
-    /// </summary>
-    public class ResearchStartedEvent : GameEvent
+// ==================== Research Events ====================
+
+/// <summary>
+///     Published when research is started
+/// </summary>
+public class ResearchStartedEvent : GameEvent
+{
+    public ResearchStartedEvent(Guid researchId, string researchName)
     {
-        public Guid ResearchId { get; }
-        public string ResearchName { get; }
-
-        public ResearchStartedEvent(Guid researchId, string researchName)
-        {
-            ResearchId = researchId;
-            ResearchName = researchName;
-        }
+        ResearchId = researchId;
+        ResearchName = researchName;
     }
 
-    /// <summary>
-    /// Published when research is completed
-    /// </summary>
-    public class ResearchCompletedEvent : GameEvent
-    {
-        public Guid ResearchId { get; }
-        public string ResearchName { get; }
+    public Guid ResearchId { get; }
+    public string ResearchName { get; }
+}
 
-        public ResearchCompletedEvent(Guid researchId, string researchName)
-        {
-            ResearchId = researchId;
-            ResearchName = researchName;
-        }
+/// <summary>
+///     Published when research is completed
+/// </summary>
+public class ResearchCompletedEvent : GameEvent
+{
+    public ResearchCompletedEvent(Guid researchId, string researchName)
+    {
+        ResearchId = researchId;
+        ResearchName = researchName;
     }
 
-    // ==================== Time Events ====================
+    public Guid ResearchId { get; }
+    public string ResearchName { get; }
+}
 
-    /// <summary>
-    /// Published when game time advances (daily tick)
-    /// </summary>
-    public class DayAdvancedEvent : GameEvent
+// ==================== Time Events ====================
+
+/// <summary>
+///     Published when game time advances (daily tick)
+/// </summary>
+public class DayAdvancedEvent : GameEvent
+{
+    public DayAdvancedEvent(int currentDay)
     {
-        public int CurrentDay { get; }
-
-        public DayAdvancedEvent(int currentDay)
-        {
-            CurrentDay = currentDay;
-        }
+        CurrentDay = currentDay;
     }
 
-    /// <summary>
-    /// Published when time acceleration changes
-    /// </summary>
-    public class TimeAccelerationChangedEvent : GameEvent
-    {
-        public float NewAcceleration { get; }
-        public float OldAcceleration { get; }
+    public int CurrentDay { get; }
+}
 
-        public TimeAccelerationChangedEvent(float newAcceleration, float oldAcceleration)
-        {
-            NewAcceleration = newAcceleration;
-            OldAcceleration = oldAcceleration;
-        }
+/// <summary>
+///     Published when time acceleration changes
+/// </summary>
+public class TimeAccelerationChangedEvent : GameEvent
+{
+    public TimeAccelerationChangedEvent(float newAcceleration, float oldAcceleration)
+    {
+        NewAcceleration = newAcceleration;
+        OldAcceleration = oldAcceleration;
     }
 
-    // ==================== UI Events ====================
+    public float NewAcceleration { get; }
+    public float OldAcceleration { get; }
+}
 
-    /// <summary>
-    /// Published when a screen/scene needs to be changed
-    /// </summary>
-    public class SceneChangeRequestedEvent : GameEvent
+// ==================== UI Events ====================
+
+/// <summary>
+///     Published when a screen/scene needs to be changed
+/// </summary>
+public class SceneChangeRequestedEvent : GameEvent
+{
+    public SceneChangeRequestedEvent(string scenePath)
     {
-        public string ScenePath { get; }
-
-        public SceneChangeRequestedEvent(string scenePath)
-        {
-            ScenePath = scenePath;
-        }
+        ScenePath = scenePath;
     }
 
-    /// <summary>
-    /// Published when UI needs to be refreshed
-    /// </summary>
-    public class UIRefreshRequestedEvent : GameEvent
-    {
-        public string UIElementName { get; }
+    public string ScenePath { get; }
+}
 
-        public UIRefreshRequestedEvent(string uiElementName = null)
-        {
-            UIElementName = uiElementName;
-        }
+/// <summary>
+///     Published when UI needs to be refreshed
+/// </summary>
+public class UIRefreshRequestedEvent : GameEvent
+{
+    public UIRefreshRequestedEvent(string uiElementName = null)
+    {
+        UIElementName = uiElementName;
     }
 
-    // ==================== Error Events ====================
+    public string UIElementName { get; }
+}
 
-    /// <summary>
-    /// Published when an error occurs
-    /// </summary>
-    public class ErrorOccurredEvent : GameEvent
+/// <summary>
+///     Published when a solar system is generated
+/// </summary>
+public class SolarSystemGeneratedEvent : GameEvent
+{
+    public SolarSystemGeneratedEvent(Guid solarSystemId, int planetCount)
     {
-        public string Message { get; }
-        public Exception Exception { get; }
-        public string Severity { get; }
-
-        public ErrorOccurredEvent(
-            string message,
-            Exception exception = null,
-            string severity = "Error"
-        )
-        {
-            Message = message;
-            Exception = exception;
-            Severity = severity;
-        }
+        SolarSystemId = solarSystemId;
+        PlanetCount = planetCount;
     }
+
+    public Guid SolarSystemId { get; }
+    public int PlanetCount { get; }
+}
+
+// ==================== Error Events ====================
+
+/// <summary>
+///     Published when an error occurs
+/// </summary>
+public class ErrorOccurredEvent : GameEvent
+{
+    public ErrorOccurredEvent(
+        string message,
+        Exception exception = null,
+        string severity = "Error"
+    )
+    {
+        Message = message;
+        Exception = exception;
+        Severity = severity;
+    }
+
+    public string Message { get; }
+    public Exception Exception { get; }
+    public string Severity { get; }
 }

@@ -1,165 +1,586 @@
-using Core.Database.Models;
-using FluentAssertions;
 using System;
 using System.Collections.Generic;
+using AlienInvasionLogistics.Source.Database.Models;
+using AlienInvasionLogistics.Source.Types;
+using AlienInvasionLogistics.Source.UI.MenuControllers;
+using AlienInvasionLogistics.Tests.Helpers;
+using FluentAssertions;
 using Xunit;
 
-namespace AlienInvasionLogistics.Tests.Models
+namespace AlienInvasionLogistics.Tests.Models;
+
+public class GameSessionTests
 {
-    public class DatabaseModelTests
+    [Fact]
+    public void GameSession_DefaultValues_ShouldBeSet()
     {
-        [Fact]
-        public void GameDataModel_ShouldInitializeWithNewGuid()
+        var session = new GameSession();
+
+        session.Id.Should().NotBe(Guid.Empty);
+        session.SessionName.Should().Be("New Game");
+        session.SaveName.Should().Be("New Save");
+        session.PlayerName.Should().Be("New Player");
+        session.InGameDay.Should().Be(0);
+        session.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
+        session.LastSavedAt.Should().BeNull();
+    }
+
+    [Fact]
+    public void GameSession_NewGuid_ShouldGenerateUniqueIds()
+    {
+        var session1 = new GameSession();
+        var session2 = new GameSession();
+
+        session1.Id.Should().NotBe(session2.Id);
+    }
+
+    [Fact]
+    public void GameSession_PropertyAccess_ShouldWork()
+    {
+        var session = new GameSession
         {
-            // Act
-            var model = new GameDataModel();
+            SessionName = "Test Session",
+            SaveName = "Test Save",
+            PlayerName = "Test Player",
+            InGameDay = 10,
+            NumberOfAiPlayers = 3,
+            NumberOfPlanets = 8,
+            StarType = StarType.RedDwarf,
+            StartingMineralModifier = 2,
+            StartingEnergyModifier = 3
+        };
 
-            // Assert
-            model.Id.Should().NotBe(Guid.Empty);
-        }
+        session.SessionName.Should().Be("Test Session");
+        session.SaveName.Should().Be("Test Save");
+        session.PlayerName.Should().Be("Test Player");
+        session.InGameDay.Should().Be(10);
+        session.NumberOfAiPlayers.Should().Be(3);
+        session.NumberOfPlanets.Should().Be(8);
+        session.StarType.Should().Be(StarType.RedDwarf);
+        session.StartingMineralModifier.Should().Be(2);
+        session.StartingEnergyModifier.Should().Be(3);
+    }
 
-        [Fact]
-        public void GameSettingsModel_ShouldStorePlayerName()
+    [Fact]
+    public void GameSession_Collections_ShouldBeEmptyByDefault()
+    {
+        var session = new GameSession();
+
+        session.PlayerIds.Should().NotBeNull().And.BeEmpty();
+        session.Players.Should().NotBeNull().And.BeEmpty();
+    }
+
+    [Fact]
+    public void GameSession_CreatedWithBuilder_ShouldHaveCorrectValues()
+    {
+        var session = TestDataBuilder.CreateGameSession("My Game", "John", 10);
+
+        session.SessionName.Should().Be("My Game");
+        session.PlayerName.Should().Be("John");
+        session.NumberOfPlanets.Should().Be(10);
+        session.SaveName.Should().Contain("John");
+        session.SaveName.Should().Contain("My Game");
+    }
+}
+
+public class PlayerTests
+{
+    [Fact]
+    public void Player_DefaultValues_ShouldBeSet()
+    {
+        var player = new Player();
+
+        player.Id.Should().NotBe(Guid.Empty);
+        player.Name.Should().Be("New Player");
+        player.IsHuman.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Player_IsHuman_DefaultsFalse()
+    {
+        var player = new Player();
+
+        player.IsHuman.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Player_PropertyAccess_ShouldWork()
+    {
+        var sessionId = Guid.NewGuid();
+        var nationId = Guid.NewGuid();
+
+        var player = new Player
         {
-            // Arrange
-            var model = new GameSettingsModel();
+            Name = "Test Player",
+            IsHuman = true,
+            GameSessionId = sessionId,
+            NationId = nationId
+        };
 
-            // Act
-            model.PlayerName = "Test Player";
+        player.Name.Should().Be("Test Player");
+        player.IsHuman.Should().BeTrue();
+        player.GameSessionId.Should().Be(sessionId);
+        player.NationId.Should().Be(nationId);
+    }
 
-            // Assert
-            model.PlayerName.Should().Be("Test Player");
-        }
+    [Fact]
+    public void Player_HumanPlayer_ShouldHaveIsHumanTrue()
+    {
+        var player = TestDataBuilder.CreateHumanPlayer("Human");
 
-        [Fact]
-        public void GameSettingsModel_ShouldStoreStartingResources()
+        player.IsHuman.Should().BeTrue();
+        player.Name.Should().Be("Human");
+    }
+
+    [Fact]
+    public void Player_AiPlayer_ShouldHaveIsHumanFalse()
+    {
+        var player = TestDataBuilder.CreateAiPlayer("AI");
+
+        player.IsHuman.Should().BeFalse();
+        player.Name.Should().Be("AI");
+    }
+
+    [Fact]
+    public void Player_ResourceState_DefaultsToNewInstance()
+    {
+        var player = new Player();
+
+        player.ResourceState.Should().NotBeNull();
+    }
+}
+
+public class NationTests
+{
+    [Fact]
+    public void Nation_DefaultValues_ShouldBeSet()
+    {
+        var nation = new Nation();
+
+        nation.Id.Should().NotBe(Guid.Empty);
+        nation.Name.Should().Be("Unnamed Nation");
+        nation.FlagColorHex.Should().Be("#FFFFFF");
+    }
+
+    [Fact]
+    public void Nation_FlagColorHex_DefaultsToWhite()
+    {
+        var nation = new Nation();
+
+        nation.FlagColorHex.Should().Be("#FFFFFF");
+    }
+
+    [Fact]
+    public void Nation_Collections_ShouldBeEmptyByDefault()
+    {
+        var nation = new Nation();
+
+        nation.OccupiedCelestialBodyIds.Should().NotBeNull().And.BeEmpty();
+        nation.OccupiedCelestialBodies.Should().NotBeNull().And.BeEmpty();
+        nation.OwnedStaticObjects.Should().NotBeNull().And.BeEmpty();
+        nation.OwnedMobileObjects.Should().NotBeNull().And.BeEmpty();
+    }
+
+    [Fact]
+    public void Nation_PropertyAccess_ShouldWork()
+    {
+        var nation = new Nation
         {
-            // Arrange
-            var model = new GameSettingsModel();
+            Name = "Test Nation",
+            FlagColorHex = "#FF0000"
+        };
 
-            // Act
-            model.StartingEnergy = 300;
-            model.StartingMinerals = 3000;
-            model.NumberOfPlanets = 7;
-            model.StarType = 1;
+        nation.Name.Should().Be("Test Nation");
+        nation.FlagColorHex.Should().Be("#FF0000");
+    }
 
-            // Assert
-            model.StartingEnergy.Should().Be(300);
-            model.StartingMinerals.Should().Be(3000);
-            model.NumberOfPlanets.Should().Be(7);
-            model.StarType.Should().Be(1);
-        }
+    [Fact]
+    public void Nation_CreatedWithBuilder_ShouldHaveCorrectValues()
+    {
+        var nation = TestDataBuilder.CreateNation("My Nation", "#00FF00");
 
-        [Fact]
-        public void PlayerStateModel_ShouldStoreResourcesState()
+        nation.Name.Should().Be("My Nation");
+        nation.FlagColorHex.Should().Be("#00FF00");
+    }
+}
+
+public class CelestialBodyTests
+{
+    [Fact]
+    public void CelestialBody_DefaultBodyType_IsPlanet()
+    {
+        var body = new CelestialBody();
+
+        body.BodyType.Should().Be(CelestialBodyType.Planet);
+    }
+
+    [Fact]
+    public void CelestialBody_ResourceDeposits_EmptyByDefault()
+    {
+        var body = new CelestialBody();
+
+        body.ResourceDeposits.Should().NotBeNull().And.BeEmpty();
+    }
+
+    [Fact]
+    public void CelestialBody_Orbits_EmptyByDefault()
+    {
+        var body = new CelestialBody();
+
+        body.Orbits.Should().NotBeNull().And.BeEmpty();
+    }
+
+    [Fact]
+    public void CelestialBody_LandingSites_NullByDefault()
+    {
+        var body = new CelestialBody();
+
+        body.LandingSites.Should().BeNull();
+    }
+
+    [Fact]
+    public void CelestialBody_DefaultValues_ShouldBeSet()
+    {
+        var body = new CelestialBody();
+
+        body.Id.Should().NotBe(Guid.Empty);
+        body.Name.Should().Be("Unnamed Celestial Body");
+        body.PositionX.Should().Be(0);
+        body.PositionY.Should().Be(0);
+        body.Mass.Should().Be(0);
+        body.Radius.Should().Be(0);
+        body.ParentBodyId.Should().BeNull();
+    }
+
+    [Fact]
+    public void CelestialBody_Star_ShouldHaveCorrectType()
+    {
+        var star = TestDataBuilder.CreateStar("Sol");
+
+        star.BodyType.Should().Be(CelestialBodyType.Star);
+        star.Name.Should().Be("Sol");
+    }
+
+    [Fact]
+    public void CelestialBody_Planet_ShouldHaveCorrectType()
+    {
+        var planet = TestDataBuilder.CreatePlanet("Earth");
+
+        planet.BodyType.Should().Be(CelestialBodyType.Planet);
+        planet.Name.Should().Be("Earth");
+    }
+
+    [Fact]
+    public void CelestialBody_Moon_ShouldHaveParentBodyId()
+    {
+        var planetId = Guid.NewGuid();
+        var moon = TestDataBuilder.CreateMoon("Luna", planetId);
+
+        moon.BodyType.Should().Be(CelestialBodyType.Moon);
+        moon.ParentBodyId.Should().Be(planetId);
+        moon.Name.Should().Be("Luna");
+    }
+
+    [Theory]
+    [InlineData(CelestialBodyType.Star)]
+    [InlineData(CelestialBodyType.GiantPlanet)]
+    [InlineData(CelestialBodyType.LargePlanet)]
+    [InlineData(CelestialBodyType.Planet)]
+    [InlineData(CelestialBodyType.DwarfPlanet)]
+    [InlineData(CelestialBodyType.MinorPlanet)]
+    [InlineData(CelestialBodyType.Moon)]
+    [InlineData(CelestialBodyType.Asteroid)]
+    [InlineData(CelestialBodyType.Comet)]
+    public void CelestialBody_AllBodyTypes_ShouldBeSettable(CelestialBodyType bodyType)
+    {
+        var body = new CelestialBody { BodyType = bodyType };
+
+        body.BodyType.Should().Be(bodyType);
+    }
+}
+
+public class GameResourceTests
+{
+    [Fact]
+    public void GameResource_DefaultValues_ShouldBeSet()
+    {
+        var resource = new GameResource();
+
+        resource.Name.Should().Be("Resource Name");
+        resource.ResourceType.Should().Be(ResourceTypes.Minerals);
+        resource.Quantity.Should().Be(0);
+        resource.MaxQuantity.Should().Be(int.MaxValue);
+    }
+
+    [Fact]
+    public void GameResource_ResourceType_DefaultsMinerals()
+    {
+        var resource = new GameResource();
+
+        resource.ResourceType.Should().Be(ResourceTypes.Minerals);
+    }
+
+    [Fact]
+    public void GameResource_MaxQuantity_DefaultsIntMaxValue()
+    {
+        var resource = new GameResource();
+
+        resource.MaxQuantity.Should().Be(int.MaxValue);
+    }
+
+    [Fact]
+    public void GameResource_Mineral_CreatedWithBuilder()
+    {
+        var resource = TestDataBuilder.CreateMineralResource(500);
+
+        resource.ResourceType.Should().Be(ResourceTypes.Minerals);
+        resource.Quantity.Should().Be(500);
+    }
+
+    [Fact]
+    public void GameResource_Energy_CreatedWithBuilder()
+    {
+        var resource = TestDataBuilder.CreateEnergyResource(250);
+
+        resource.ResourceType.Should().Be(ResourceTypes.Energy);
+        resource.Quantity.Should().Be(250);
+    }
+}
+
+public class ResearchItemTests
+{
+    [Fact]
+    public void ResearchItem_DefaultValues_ShouldBeSet()
+    {
+        var item = new ResearchItem();
+
+        item.Name.Should().Be("Research Name");
+        item.Description.Should().Be("Research Description");
+        item.ResearchState.Should().Be(ResearchStates.None);
+    }
+
+    [Fact]
+    public void ResearchItem_ResearchState_DefaultsToNone()
+    {
+        var item = new ResearchItem();
+
+        item.ResearchState.Should().Be(ResearchStates.None);
+    }
+
+    [Fact]
+    public void ResearchItem_CreatedWithBuilder_ShouldHaveCorrectValues()
+    {
+        var item = TestDataBuilder.CreateResearchItem("Laser Tech", ResearchStates.Completed);
+
+        item.Name.Should().Be("Laser Tech");
+        item.Description.Should().Contain("Laser Tech");
+        item.ResearchState.Should().Be(ResearchStates.Completed);
+    }
+
+    [Theory]
+    [InlineData(ResearchStates.None)]
+    [InlineData(ResearchStates.Queued)]
+    [InlineData(ResearchStates.InProgress)]
+    [InlineData(ResearchStates.Completed)]
+    public void ResearchItem_AllStates_ShouldBeSettable(ResearchStates state)
+    {
+        var item = new ResearchItem { ResearchState = state };
+
+        item.ResearchState.Should().Be(state);
+    }
+}
+
+public class OrbitTests
+{
+    [Fact]
+    public void Orbit_DefaultName_ShouldBeOrbit1()
+    {
+        var orbit = new Orbit();
+
+        orbit.Name.Should().Be("Orbit 1");
+    }
+
+    [Fact]
+    public void Orbit_ObjectIdLists_EmptyByDefault()
+    {
+        var orbit = new Orbit();
+
+        orbit.StaticArtificialObjectIds.Should().NotBeNull().And.BeEmpty();
+        orbit.MobileArtificialObjectIds.Should().NotBeNull().And.BeEmpty();
+        orbit.StaticArtificialObjects.Should().NotBeNull().And.BeEmpty();
+        orbit.MobileArtificialObjects.Should().NotBeNull().And.BeEmpty();
+    }
+
+    [Fact]
+    public void Orbit_PropertyAccess_ShouldWork()
+    {
+        var orbit = new Orbit
         {
-            // Arrange
-            var model = new PlayerStateModel();
-            var resourcesState = new ResourcesState
-            {
-                EnergyStored = 200,
-                MineralsStored = 2000,
-                EnergyIncomeDaily = 10,
-                MineralsIncomeDaily = 50
-            };
+            Name = "High Orbit",
+            MaxStationaryArtificialObjects = 20,
+            MaxMobileArtificialObjects = 10,
+            CurrentStationaryArtificialObjects = 5,
+            CurrentMobileArtificialObjects = 3
+        };
 
-            // Act
-            model.ResourcesState = resourcesState;
+        orbit.Name.Should().Be("High Orbit");
+        orbit.MaxStationaryArtificialObjects.Should().Be(20);
+        orbit.MaxMobileArtificialObjects.Should().Be(10);
+        orbit.CurrentStationaryArtificialObjects.Should().Be(5);
+        orbit.CurrentMobileArtificialObjects.Should().Be(3);
+    }
+}
 
-            // Assert
-            model.ResourcesState.Should().NotBeNull();
-            model.ResourcesState.EnergyStored.Should().Be(200);
-            model.ResourcesState.MineralsStored.Should().Be(2000);
-        }
+public class LandingSiteTests
+{
+    [Fact]
+    public void LandingSite_DefaultName_ShouldBeLandingSite1()
+    {
+        var site = new LandingSite();
 
-        [Fact]
-        public void AIPlayerStateModel_ShouldStoreResourcesState()
+        site.Name.Should().Be("Landing Site 1");
+    }
+
+    [Fact]
+    public void LandingSite_PropertyAccess_ShouldWork()
+    {
+        var site = new LandingSite
         {
-            // Arrange
-            var model = new AIPlayerStateModel();
-            var resourcesState = new ResourcesState { EnergyStored = 1000, MineralsStored = 1000 };
+            Name = "Base Alpha",
+            MaxStationaryArtificialObjects = 15,
+            MaxMobileArtificialObjects = 8,
+            CurrentStationaryArtificialObjects = 2,
+            CurrentMobileArtificialObjects = 1
+        };
 
-            // Act
-            model.ResourcesState = resourcesState;
+        site.Name.Should().Be("Base Alpha");
+        site.MaxStationaryArtificialObjects.Should().Be(15);
+        site.MaxMobileArtificialObjects.Should().Be(8);
+        site.CurrentStationaryArtificialObjects.Should().Be(2);
+        site.CurrentMobileArtificialObjects.Should().Be(1);
+    }
 
-            // Assert
-            model.ResourcesState.Should().NotBeNull();
-            model.ResourcesState.EnergyStored.Should().Be(1000);
-        }
+    [Fact]
+    public void LandingSite_ObjectIdLists_EmptyByDefault()
+    {
+        var site = new LandingSite();
 
-        [Fact]
-        public void GameStateModel_ShouldStoreAIPlayerStates()
-        {
-            // Arrange
-            var model = new GameStateModel();
-            var aiPlayer1 = new AIPlayerStateModel { Id = Guid.NewGuid() };
-            var aiPlayer2 = new AIPlayerStateModel { Id = Guid.NewGuid() };
+        site.StaticArtificialObjectIds.Should().NotBeNull().And.BeEmpty();
+        site.MobileArtificialObjectIds.Should().NotBeNull().And.BeEmpty();
+    }
+}
 
-            // Act
-            model.AIPlayerStates = new List<AIPlayerStateModel> { aiPlayer1, aiPlayer2 };
+public class PlanetarySystemTests
+{
+    [Fact]
+    public void PlanetarySystem_DefaultValues_ShouldBeSet()
+    {
+        var system = new PlanetarySystem();
 
-            // Assert
-            model.AIPlayerStates.Should().HaveCount(2);
-            model.AIPlayerStates.Should().Contain(aiPlayer1);
-            model.AIPlayerStates.Should().Contain(aiPlayer2);
-        }
+        system.Id.Should().NotBe(Guid.Empty);
+        system.Name.Should().Be("Unnamed Celestial Body");
+    }
 
-        [Fact]
-        public void GameSaveModel_ShouldInitializeWithDefaults()
-        {
-            // Act
-            var model = new GameSaveModel();
+    [Fact]
+    public void PlanetarySystem_NullableCollections_DefaultNull()
+    {
+        var system = new PlanetarySystem();
 
-            // Assert
-            model.SaveGameName.Should().Be("New Save");
-            model.InGameDay.Should().Be(0);
-            model.GameMode.Should().Be(0);
-            model.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
-        }
+        system.CelestialBodyIds.Should().BeNull();
+        system.CelestialBodies.Should().BeNull();
+        system.PlanetarySystemIds.Should().BeNull();
+        system.PlanetarySystems.Should().BeNull();
+    }
 
-        [Fact]
-        public void SolarSystemState_ShouldStoreNavigationProperties()
-        {
-            // Arrange
-            var model = new SolarSystemState();
-            var sun = new SunStateModel { Id = Guid.NewGuid(), DisplayName = "Test Sun" };
-            var planetarySystem = new PlanetarySystemState
-            {
-                Id = Guid.NewGuid(),
-                Name = "Inner System"
-            };
+    [Fact]
+    public void PlanetarySystem_CreatedWithBuilder_ShouldHaveCorrectValues()
+    {
+        var planet = TestDataBuilder.CreatePlanet("Earth");
+        var system = TestDataBuilder.CreatePlanetarySystem(planet);
 
-            // Act
-            model.SystemSun = sun;
-            model.PlanetarySystems = new List<PlanetarySystemState> { planetarySystem };
+        system.CentralMassId.Should().Be(planet.Id);
+        system.CentralMass.Should().Be(planet);
+        system.Name.Should().Contain("Earth");
+        system.CelestialBodyIds.Should().NotBeNull().And.BeEmpty();
+        system.PlanetarySystemIds.Should().NotBeNull().And.BeEmpty();
+    }
+}
 
-            // Assert
-            model.SystemSun.Should().NotBeNull();
-            model.SystemSun.DisplayName.Should().Be("Test Sun");
-            model.PlanetarySystems.Should().HaveCount(1);
-        }
+public class SolarSystemTests
+{
+    [Fact]
+    public void SolarSystem_DefaultValues_ShouldBeSet()
+    {
+        var system = new SolarSystem();
 
-        [Fact]
-        public void PlanetStateModel_ShouldStorePhysicsProperties()
-        {
-            // Arrange
-            var model = new PlanetStateModel();
+        system.Id.Should().NotBe(Guid.Empty);
+        system.Name.Should().Be("Unnamed Celestial Body");
+    }
 
-            // Act
-            model.DisplayName = "Earth";
-            model.PositionX = 100f;
-            model.PositionY = 200f;
-            model.VelocityX = 5f;
-            model.VelocityY = 10f;
-            model.Mass = 5.972e24f;
+    [Fact]
+    public void SolarSystem_PlanetarySystems_EmptyByDefault()
+    {
+        var system = new SolarSystem();
 
-            // Assert
-            model.DisplayName.Should().Be("Earth");
-            model.PositionX.Should().Be(100f);
-            model.PositionY.Should().Be(200f);
-            model.VelocityX.Should().Be(5f);
-            model.VelocityY.Should().Be(10f);
-            model.Mass.Should().Be(5.972e24f);
-        }
+        system.PlanetarySystems.Should().NotBeNull().And.BeEmpty();
+    }
+
+    [Fact]
+    public void SolarSystem_CreatedWithBuilder_ShouldHaveCorrectValues()
+    {
+        var system = TestDataBuilder.CreateDefaultSolarSystem();
+
+        system.Name.Should().Be("Solar System");
+        system.CentralMass.Should().NotBeNull();
+        system.CentralMass.BodyType.Should().Be(CelestialBodyType.Star);
+        system.PlanetarySystems.Should().NotBeNull().And.BeEmpty();
+    }
+}
+
+public class StrategicWorldStateTests
+{
+    [Fact]
+    public void StrategicWorldState_DefaultValues_ShouldBeSet()
+    {
+        var state = new StrategicWorldState();
+
+        state.Id.Should().NotBe(Guid.Empty);
+        state.Name.Should().Be("Unnamed Strategic World");
+    }
+
+    [Fact]
+    public void StrategicWorldState_Collections_EmptyByDefault()
+    {
+        var state = new StrategicWorldState();
+
+        state.NationIds.Should().NotBeNull().And.BeEmpty();
+        state.PlayerIds.Should().NotBeNull().And.BeEmpty();
+        state.Nations.Should().NotBeNull().And.BeEmpty();
+        state.Players.Should().NotBeNull().And.BeEmpty();
+    }
+}
+
+public class ResearchStateTests
+{
+    [Fact]
+    public void ResearchState_CreatedWithBuilder_ShouldHaveEmptyCollections()
+    {
+        var state = TestDataBuilder.CreateResearchState();
+
+        state.FinishedResearch.Should().NotBeNull().And.BeEmpty();
+        state.ResearchQueue.Should().NotBeNull().And.BeEmpty();
+        state.KnownResearch.Should().NotBeNull().And.BeEmpty();
+        state.CurrentResearch.Should().BeNull();
+    }
+}
+
+public class ResourcesStateTests
+{
+    [Fact]
+    public void ResourcesState_CreatedWithBuilder_ShouldHaveEmptyResources()
+    {
+        var state = TestDataBuilder.CreateResourcesState();
+
+        state.Resources.Should().NotBeNull().And.BeEmpty();
     }
 }

@@ -30,6 +30,7 @@ Tests/
 ## Running Tests
 
 ### Command Line
+
 ```bash
 # Run all tests
 dotnet test
@@ -42,11 +43,13 @@ dotnet test --collect:"XPlat Code Coverage"
 ```
 
 ### Visual Studio
+
 1. Open Test Explorer (Test → Test Explorer)
 2. Click "Run All" to run all tests
 3. Right-click individual tests to run or debug them
 
 ### Visual Studio Code
+
 1. Install the .NET Core Test Explorer extension
 2. Tests will appear in the Test Explorer sidebar
 3. Click the play button to run tests
@@ -54,7 +57,9 @@ dotnet test --collect:"XPlat Code Coverage"
 ## Test Categories
 
 ### Database Tests
+
 Tests for Entity Framework Core context and data service:
+
 - Navigation property relationships
 - Owned type configurations
 - Many-to-many relationships
@@ -62,21 +67,27 @@ Tests for Entity Framework Core context and data service:
 - Data persistence and retrieval
 
 ### Game Object Tests
+
 Tests for game entities:
+
 - Sun and Planet initialization
 - Property getters/setters
 - IStellarBody interface compliance
 - Position and velocity calculations
 
 ### Model Tests
+
 Tests for database models:
+
 - Model initialization
 - Property storage
 - Default values
 - Navigation properties
 
 ### Utility Tests
+
 Tests for helper and utility classes:
+
 - Error handler logging
 - Different error severity levels
 - Exception handling
@@ -84,13 +95,17 @@ Tests for helper and utility classes:
 ## Test Helpers
 
 ### TestDbContextFactory
+
 Creates in-memory database contexts for testing:
+
 ```csharp
 var context = TestDbContextFactory.CreateInMemoryContext();
 ```
 
 ### TestDataBuilder
+
 Provides pre-configured test data:
+
 ```csharp
 var gameSettings = TestDataBuilder.CreateDefaultGameSettings();
 var playerState = TestDataBuilder.CreateTestPlayerState();
@@ -100,6 +115,7 @@ var gameData = TestDataBuilder.CreateTestGameData();
 ## Writing New Tests
 
 ### Basic Test Structure
+
 ```csharp
 [Fact]
 public void MethodName_Scenario_ExpectedBehavior()
@@ -116,6 +132,7 @@ public void MethodName_Scenario_ExpectedBehavior()
 ```
 
 ### Theory Tests (Parameterized)
+
 ```csharp
 [Theory]
 [InlineData(1, "expected1")]
@@ -127,6 +144,7 @@ public void MethodName_WithDifferentInputs_ReturnsExpected(int input, string exp
 ```
 
 ### Async Tests
+
 ```csharp
 [Fact]
 public async Task MethodName_Scenario_ExpectedBehavior()
@@ -168,6 +186,7 @@ Then open `coveragereport/index.html` to view the coverage report.
 ## Continuous Integration
 
 Tests should be run on every commit/PR:
+
 - All tests must pass before merging
 - Maintain minimum 70% code coverage
 - No skipped or ignored tests without justification
@@ -175,15 +194,18 @@ Tests should be run on every commit/PR:
 ## Troubleshooting
 
 ### Tests Not Discovered
+
 - Ensure test class is public
 - Ensure test methods have `[Fact]` or `[Theory]` attribute
 - Rebuild the solution
 
 ### In-Memory Database Issues
+
 - Each test should use a unique database name
 - Dispose contexts properly
 - Don't share context instances between tests
 
 ### Async Test Deadlocks
+
 - Use `await` instead of `.Result` or `.Wait()`
 - Don't mix async and blocking calls

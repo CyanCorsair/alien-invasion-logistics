@@ -1,20 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+using AlienInvasionLogistics.Source.Database.Models;
 
-namespace Core.Types.Research
+namespace AlienInvasionLogistics.Source.Types;
+
+public class StartingResearch
 {
-    public class ResearchItem
-    {
-        [Key]
-        public Guid Id { get; set; } = Guid.NewGuid();
-        public string Name { get; set; }
-        public string DisplayName { get; set; }
-        public string Description { get; set; }
-    }
-
-    public struct StartingResearch
-    {
-        public List<ResearchItem> startingResearch;
-    }
+    public List<ResearchItem> startingResearch;
 }

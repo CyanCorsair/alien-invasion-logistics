@@ -1,12 +1,12 @@
-using Godot;
 using System;
-using System.Threading.Tasks;
-using Core.Database;
-using Core.Types.Resource;
-using Core.Types.Research;
-using Core.Utilities;
+using System.Globalization;
+using AlienInvasionLogistics.Source.Database;
+using AlienInvasionLogistics.Source.Database.Models;
+using AlienInvasionLogistics.Source.Types;
+using AlienInvasionLogistics.Source.Utilities;
+using Godot;
 
-namespace Core.Controllers.UI.NewGameScreen;
+namespace AlienInvasionLogistics.Source.UI.MenuControllers;
 
 public enum StarType
 {
@@ -25,37 +25,40 @@ public enum StartingResourcesMultiplier
 public struct GameSettings
 {
     public int NumberOfPlanets;
-    public int StarType;
-    public StartingResources StartingResources;
-    public StartingResearch StartingResearch;
+    public StarType StarType;
+    public Guid PlayerNationId;
+    public int StartingMineralModifier;
+    public int StartingEnergyModifier;
+    public int AiPlayerCount;
     public string PlayerName;
+    public string SessionName;
+    
 }
 
 public partial class NewGameScreenController : Panel
 {
-    LineEdit playerNameControl;
-
-    HSlider planetCountControl;
-    RichTextLabel planetCountText;
-
-    OptionButton starTypeControl;
-    OptionButton startingResourcesMultiplierControl;
-
-    Button StartGameButton;
-    Button CancelSetupButton;
-
     private const int MIN_PLANETS = 1;
     private const int MAX_PLANETS = 20;
     private const int DEFAULT_PLANETS = 5;
 
     private const StarType DEFAULT_STAR_TYPE = StarType.MainSequence;
+
     private const StartingResourcesMultiplier DEFAULT_STARTING_RESOURCES =
         StartingResourcesMultiplier.Medium;
 
-    string _playerName = "Player";
-    double numberOfPlanets = DEFAULT_PLANETS;
-    StarType starType = DEFAULT_STAR_TYPE;
-    StartingResourcesMultiplier startingResourcesMultiplier = DEFAULT_STARTING_RESOURCES;
+    private Button CancelSetupButton;
+    private double numberOfPlanets = DEFAULT_PLANETS;
+
+    private HSlider planetCountControl;
+    private RichTextLabel planetCountText;
+    private LineEdit playerNameControl;
+
+    private Button StartGameButton;
+    private StartingResourcesMultiplier startingResourcesMultiplier = DEFAULT_STARTING_RESOURCES;
+    private OptionButton startingResourcesMultiplierControl;
+    private StarType starType = DEFAULT_STAR_TYPE;
+
+    private OptionButton starTypeControl;
 
     private int StartingEnergyResources
     {
@@ -93,17 +96,15 @@ public partial class NewGameScreenController : Panel
         }
     }
 
-    private string PlayerName
-    {
-        get { return _playerName; }
-        set { _playerName = value; }
-    }
+    private string PlayerName { get; set; } = "Player";
+    private string SessionName { get; set; } = "New Game";
 
     public override void _Ready()
     {
         playerNameControl = GetNode<LineEdit>(
             "SettingsPanel/BasicSettings/PlayerNameContainer/PlayerNameTextField"
         );
+        playerNameControl.Text = PlayerName;
 
         planetCountControl = GetNode<HSlider>(
             "SettingsPanel/BasicSettings/PlanetCountContainer/PlanetCountRange"
@@ -130,7 +131,9 @@ public partial class NewGameScreenController : Panel
         CancelSetupButton.Pressed += OnCancelSetup;
     }
 
-    public override void _Process(double delta) { }
+    public override void _Process(double delta)
+    {
+    }
 
     public override void _ExitTree()
     {
@@ -151,8 +154,9 @@ public partial class NewGameScreenController : Panel
             );
             return;
         }
+
         numberOfPlanets = newPlanetCount;
-        planetCountText.Text = numberOfPlanets.ToString();
+        planetCountText.Text = numberOfPlanets.ToString(CultureInfo.InvariantCulture);
     }
 
     private void OnStarTypeChanged(long index)
@@ -181,16 +185,15 @@ public partial class NewGameScreenController : Panel
 
         StartingResearch startingResearch = new();
         StartingResources startingResources =
-            new() { energy = StartingEnergyResources, minerals = StartingMineralResources };
+            new() { Energy = StartingEnergyResources, Minerals = StartingMineralResources };
 
         GameSettings settings =
             new()
             {
                 NumberOfPlanets = (int)numberOfPlanets,
-                StarType = (int)starType,
-                StartingResources = startingResources,
-                StartingResearch = startingResearch,
-                PlayerName = PlayerName
+                StarType = starType,
+                PlayerName = PlayerName,
+                SessionName = SessionName,
             };
 
         try
@@ -205,14 +208,10 @@ public partial class NewGameScreenController : Panel
 
             // Create new game asynchronously
             await gameDataService.CreateNewGameAsync(settings);
-
-            GD.Print("Change scene to main game");
-            // Use CallDeferred to ensure scene change happens on main thread
-            CallDeferred(MethodName.ChangeToGameScene);
         }
         catch (Exception ex)
         {
-            ErrorHandler.LogError("Error creating new game", ex, ErrorSeverity.Error);
+            ErrorHandler.LogMessage("Error creating new game", ex);
             ShowErrorDialog("Failed to create new game. Please try again.");
         }
     }

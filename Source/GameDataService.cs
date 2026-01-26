@@ -1,176 +1,123 @@
-using Godot;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Core.Controllers.UI.NewGameScreen;
-using Core.Database.Contexts;
-using Core.Database.Models;
-using Core.Types;
-using Core.Types.Research;
+using AlienInvasionLogistics.Source.Database;
+using AlienInvasionLogistics.Source.Database.Models;
+using AlienInvasionLogistics.Source.Events;
+using AlienInvasionLogistics.Source.UI.MenuControllers;
+using AlienInvasionLogistics.Source.Utilities;
+using Godot;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
-namespace Core.Database
+namespace AlienInvasionLogistics.Source;
+
+public partial class GameDataService : Node, IGameDataService
 {
-    [GlobalClass]
-    public partial class GameDataService : Node, IGameDataService
+    private IGameDataContextFactory _contextFactory;
+    private IEventBus _eventBus;
+
+    public async Task CreateNewGameAsync(GameSettings settings)
     {
-        private IGameDataContextFactory _contextFactory;
+        await using var context = _contextFactory.CreateDbContext();
+        await using var transaction = await context.Database.BeginTransactionAsync();
 
-        public void Initialize(IGameDataContextFactory contextFactory)
+        try
         {
-            _contextFactory =
-                contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
-        }
+            ErrorHandler.LogMessage("Creating new game", severity: ErrorUtilities.MessageLevel.Info);
 
-        public async Task CreateNewGameAsync(GameSettings settings)
-        {
-            await using var context = _contextFactory.CreateDbContext();
-
-            GD.Print("Creating new game settings");
-
-            GameSettingsModel newGameSettings =
-                new()
-                {
-                    Id = Guid.NewGuid(),
-                    PlayerName = settings.PlayerName,
-                    NumberOfPlanets = settings.NumberOfPlanets,
-                    StarType = settings.StarType,
-                    StartingEnergy = settings.StartingResources.energy,
-                    StartingMinerals = settings.StartingResources.minerals,
-                };
-
-            PlayerStateModel playerState =
-                new()
-                {
-                    Id = Guid.NewGuid(),
-                    ResourcesState = new ResourcesState
-                    {
-                        EnergyStored = settings.StartingResources.energy,
-                        MineralsStored = settings.StartingResources.minerals,
-                        EnergyIncomeDaily = 0,
-                        MineralsIncomeDaily = 0
-                    },
-                    ResearchState = new ResearchState
-                    {
-                        CurrentResearch = null,
-                        ResearchQueue = new List<ResearchItem>(),
-                        CompletedResearch =
-                            settings.StartingResearch.startingResearch ?? new List<ResearchItem>()
-                    }
-                };
-
-            AIPlayerStateModel aiPlayerState =
-                new()
-                {
-                    Id = Guid.NewGuid(),
-                    ResourcesState = new ResourcesState
-                    {
-                        EnergyStored = 1000,
-                        MineralsStored = 1000,
-                        EnergyIncomeDaily = 0,
-                        MineralsIncomeDaily = 0
-                    },
-                    ResearchState = new ResearchState
-                    {
-                        CurrentResearch = null,
-                        ResearchQueue = new List<ResearchItem>(),
-                        CompletedResearch = new List<ResearchItem>()
-                    }
-                };
-
-            SolarSystemState solarSystemState = new() { Id = Guid.NewGuid() };
-
-            GameStateModel gameStateModel =
-                new()
-                {
-                    Id = Guid.NewGuid(),
-                    CurrentInGameDay = 0,
-                    CurrentTimeAcceleration = 1.0f,
-                    PlayerStateForeignKey = playerState.Id,
-                    AIPlayerStates = new List<AIPlayerStateModel> { aiPlayerState },
-                    SolarSystemStateForeignKey = solarSystemState.Id
-                };
-
-            GameDataModel newGameData =
-                new()
-                {
-                    Id = Guid.NewGuid(),
-                    GameSettingsForeignKey = newGameSettings.Id,
-                    GameStateForeignKey = gameStateModel.Id
-                };
-
-            context.GameSettings.Add(newGameSettings);
-            context.PlayerState.Add(playerState);
-            context.AIPLayerStates.Add(aiPlayerState);
-            context.SolarSystemState.Add(solarSystemState);
-            context.GameState.Add(gameStateModel);
-            context.GameData.Add(newGameData);
-
-            await context.SaveChangesAsync();
-            GD.Print("New game created successfully");
-        }
-
-        public async Task<List<GameSaveModel>> GetAllSavesAsync()
-        {
-            await using var context = _contextFactory.CreateDbContext();
-            return await context.GameSaves.ToListAsync();
-        }
-
-        public async Task<GameDataModel> LoadGameAsync(string saveId)
-        {
-            await using var context = _contextFactory.CreateDbContext();
-
-            Guid saveGuid = Guid.Empty;
-
-            if (Guid.TryParse(saveId, out saveGuid) == false)
+            var gameSession = new GameSession()
             {
-                GD.PrintErr("Invalid save ID format");
-                return null;
-            }
+                SessionName = settings.SessionName,
+                SaveName = $"{settings.PlayerName} - {settings.SessionName} - Day 0",
+                InGameDay = 0,
+                CreatedAt = DateTime.UtcNow,
+                NumberOfAiPlayers = settings.AiPlayerCount,
+                NumberOfPlanets = settings.NumberOfPlanets,
+                StarType = settings.StarType,
+                StartingMineralModifier = settings.StartingMineralModifier,
+                StartingEnergyModifier = settings.StartingEnergyModifier,
+            };
 
-            var save = await context.GameSaves.FindAsync(Guid.Parse(saveId));
-            if (save == null)
-            {
-                GD.PrintErr("No save found with that ID");
-                return null;
-            }
+            ErrorHandler.LogMessage($"{JsonConvert.SerializeObject(
+                gameSession, Formatting.Indented)}",
+                severity: ErrorUtilities.MessageLevel.Info);
+            //context.GameSessions.Add(gameSession);
+            //await context.SaveChangesAsync();
+            //await transaction.CommitAsync();
 
-            var gameData = await context.GameData.FindAsync(save.GameDataForeignKey);
-            if (gameData == null)
-            {
-                GD.PrintErr("No game data found for that save");
-                return null;
-            }
-
-            return gameData;
+            ErrorHandler.LogMessage("New game created successfully", severity: ErrorUtilities.MessageLevel.Info);
+            _eventBus.Publish(new GameCreatedEvent(gameSession.Id, settings.PlayerName));
         }
-
-        public async Task SaveGameAsync(GameSaveData gameSave)
+        catch (Exception ex)
         {
-            await using var context = _contextFactory.CreateDbContext();
-
-            GameSaveModel newSave =
-                new()
-                {
-                    Id = Guid.NewGuid(),
-                    SaveGameName = gameSave.SaveName,
-                    InGameDay = gameSave.InGameDay,
-                    GameMode = gameSave.GameMode,
-                    GameDataForeignKey = gameSave.GameDataId,
-                    CreatedAt = DateTime.UtcNow,
-                    LastUpdatedAt = DateTime.UtcNow
-                };
-
-            context.GameSaves.Add(newSave);
-            await context.SaveChangesAsync();
+            await transaction.RollbackAsync();
+            ErrorHandler.LogMessage("Failed to create new game", ex);
+            throw;
         }
+    }
 
-        public async Task ClearDatabaseAsync()
+    public async Task SaveGameAsync(GameSession newSession)
+    {
+        await using var context = _contextFactory.CreateDbContext();
+        await context.GameSessions.AddAsync(newSession);
+        await context.SaveChangesAsync();
+        _eventBus.Publish(new GameSavedEvent(newSession.Id, newSession.SaveName));
+    }
+
+    public async Task ClearDatabaseAsync()
+    {
+        await using var context = _contextFactory.CreateDbContext();
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+    }
+
+    public void Initialize(IGameDataContextFactory contextFactory, IEventBus eventBus)
+    {
+        _contextFactory =
+            contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+    }
+
+    public async Task<List<GameSession>> GetAllSavesAsync()
+    {
+        await using var context = _contextFactory.CreateDbContext();
+        return await context.GameSessions.ToListAsync();
+    }
+
+    public async Task<GameSession> LoadGameAsync(string saveId)
+    {
+        await using var context = _contextFactory.CreateDbContext();
+
+        if (!Guid.TryParse(saveId, out _))
         {
-            await using var context = _contextFactory.CreateDbContext();
-            await context.Database.EnsureDeletedAsync();
-            await context.Database.EnsureCreatedAsync();
+            ErrorHandler.LogMessage("Invalid save ID format", severity: ErrorUtilities.MessageLevel.Warning);
+            return null;
         }
+
+        var save = await context.GameSessions
+            .Include(gs => gs.Players)
+                .ThenInclude(p => p.Nation)
+            .Include(gs => gs.Players)
+                .ThenInclude(p => p.ResearchState)
+            .Include(gs => gs.Players)
+                .ThenInclude(p => p.ResourceState)
+            .Include(gs => gs.StrategicWorldState)
+                .ThenInclude(sws => sws.SolarSystem)
+                    .ThenInclude(ss => ss.CentralMass)
+            .Include(gs => gs.StrategicWorldState)
+                .ThenInclude(sws => sws.SolarSystem)
+                    .ThenInclude(ss => ss.PlanetarySystems)
+            .FirstOrDefaultAsync(gs => gs.Id == Guid.Parse(saveId));
+
+        if (save != null)
+        {
+            _eventBus.Publish(new GameLoadedEvent(save.Id, save.SessionName));
+            return save;
+        }
+
+        ErrorHandler.LogMessage("No save found with that ID", severity: ErrorUtilities.MessageLevel.Warning);
+        return null;
+
     }
 }

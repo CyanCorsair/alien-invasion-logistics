@@ -7,7 +7,7 @@
 [sub_resource type="Theme" id="Theme_v60se"]
 TabContainer/styles/tabbar_background = SubResource("StyleBoxFlat_0875k")
 
-[node name="MapUi" type="Control"]
+[node name="StratMapUi" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -33,16 +33,6 @@ tabs_position = 1
 [node name="Map" type="Control" parent="TabMenuWrapper"]
 layout_mode = 2
 metadata/_tab_index = 0
-
-[node name="PanelContainer" type="PanelContainer" parent="TabMenuWrapper/Map"]
-custom_minimum_size = Vector2(0, 32)
-layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 0
 
 [node name="Research" type="Control" parent="TabMenuWrapper"]
 visible = false

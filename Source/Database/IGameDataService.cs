@@ -1,18 +1,17 @@
-using Core.Controllers.UI.NewGameScreen;
-using Core.Database.Models;
-using Core.Types;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using AlienInvasionLogistics.Source.Database.Dtos;
+using AlienInvasionLogistics.Source.Database.Models;
+using AlienInvasionLogistics.Source.Types;
+using AlienInvasionLogistics.Source.UI.MenuControllers;
 
-namespace Core.Database
+namespace AlienInvasionLogistics.Source.Database;
+
+public interface IGameDataService
 {
-    public interface IGameDataService
-    {
-        Task CreateNewGameAsync(GameSettings settings);
-        Task<List<GameSaveModel>> GetAllSavesAsync();
-        Task<GameDataModel> LoadGameAsync(string saveId);
-        Task SaveGameAsync(GameSaveData gameSave);
-        Task ClearDatabaseAsync();
-    }
+    Task CreateNewGameAsync(GameSettings settings);
+    Task<List<GameSession>> GetAllSavesAsync();
+    Task<GameSession> LoadGameAsync(string saveId);
+    Task SaveGameAsync(GameSession gameSession);
+    Task ClearDatabaseAsync();
 }

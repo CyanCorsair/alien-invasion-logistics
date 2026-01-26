@@ -1,106 +1,119 @@
-using Godot;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.EntityFrameworkCore;
-using Core.Database;
-using Core.Database.Contexts;
-using Core.Events;
 using System;
+using System.IO;
+using AlienInvasionLogistics.Source.Database;
+using AlienInvasionLogistics.Source.Database.Contexts;
+using AlienInvasionLogistics.Source.Events;
+using AlienInvasionLogistics.Source.Services;
+using Godot;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Environment = System.Environment;
 
-namespace Core
+namespace AlienInvasionLogistics.Source;
+
+/// <summary>
+///     Godot autoload singleton that manages dependency injection
+/// </summary>
+public partial class ServiceContainer : Node
 {
-    /// <summary>
-    /// Godot autoload singleton that manages dependency injection
-    /// </summary>
-    [GlobalClass]
-    public partial class ServiceContainer : Node
+    private static ServiceProvider _serviceProvider;
+    private static IServiceCollection _services;
+
+    public override void _Ready()
     {
-        private static ServiceProvider _serviceProvider;
-        private static IServiceCollection _services;
+        GD.Print("Initializing ServiceContainer...");
+        ConfigureServices();
+        GD.Print("ServiceContainer initialized");
+    }
 
-        public override void _Ready()
+    private void ConfigureServices()
+    {
+        _services = new ServiceCollection();
+
+        // Configure DbContext with factory pattern
+        var folder = Environment.SpecialFolder.LocalApplicationData;
+        var path = Environment.GetFolderPath(folder);
+        var dbPath = Path.Join(path, "GameData.db");
+
+        _services.AddDbContextFactory<GameDataContext>(options => options.UseSqlite($"Data Source={dbPath}")
+        );
+
+        // Register custom factory wrapper
+        _services.AddSingleton<IGameDataContextFactory, GameDataContextFactory>(sp =>
         {
-            GD.Print("Initializing ServiceContainer...");
-            ConfigureServices();
-            GD.Print("ServiceContainer initialized");
+            var options = new DbContextOptionsBuilder<GameDataContext>()
+                .UseSqlite($"Data Source={dbPath}")
+                .Options;
+            return new GameDataContextFactory(options);
+        });
+
+        // Register GameEventBus
+        _services.AddSingleton<IEventBus>(sp =>
+        {
+            var eventBus = GetNode<GameEventBus>("/root/GameEventBus");
+
+            if (eventBus is null)
+                throw new InvalidOperationException(
+                    "GameEventBus node not found in the scene tree."
+                );
+            return eventBus;
+        });
+
+        // Register services
+        _services.AddSingleton<IGameDataService>(sp =>
+        {
+            var gameDataService = GetNode<GameDataService>("/root/GameDataService");
+            var factory = sp.GetRequiredService<IGameDataContextFactory>();
+            var eventBus = sp.GetRequiredService<IEventBus>();
+            gameDataService.Initialize(factory, eventBus);
+
+            // Ensure database is created
+            using var context = factory.CreateDbContext();
+            context.Database.EnsureCreated();
+
+            return gameDataService;
+        });
+
+        _services.AddSingleton<ISolarSystemGenerator>(sp =>
+        {
+            var generator = GetNode<SolarSystemGenerator>("/root/SolarSystemGenerator");
+            var eventBus = sp.GetRequiredService<IEventBus>();
+            generator.Initialize(eventBus);
+            return generator;
+        });
+
+        // Register GameObjectFactoryService (plain C# class)
+        _services.AddSingleton<GameObjectFactoryService>(sp =>
+        {
+            var factory = new GameObjectFactoryService();
+            var eventBus = sp.GetRequiredService<IEventBus>();
+            factory.Initialize(eventBus);
+            return factory;
+        });
+
+        _serviceProvider = _services.BuildServiceProvider();
+    }
+
+    public static T GetService<T>()
+    {
+        if (_serviceProvider == null)
+        {
+            GD.PrintErr("ServiceContainer not initialized!");
+            return default;
         }
 
-        private void ConfigureServices()
-        {
-            _services = new ServiceCollection();
+        return _serviceProvider.GetService<T>();
+    }
 
-            // Configure DbContext with factory pattern
-            var folder = System.Environment.SpecialFolder.LocalApplicationData;
-            var path = System.Environment.GetFolderPath(folder);
-            var dbPath = System.IO.Path.Join(path, "GameData.db");
+    public static T GetRequiredService<T>()
+    {
+        if (_serviceProvider == null) throw new InvalidOperationException("ServiceContainer not initialized!");
 
-            _services.AddDbContextFactory<GameDataContext>(
-                options => options.UseSqlite($"Data Source={dbPath}")
-            );
+        return _serviceProvider.GetRequiredService<T>();
+    }
 
-            // Register custom factory wrapper
-            _services.AddSingleton<IGameDataContextFactory, GameDataContextFactory>(sp =>
-            {
-                var options = new DbContextOptionsBuilder<GameDataContext>()
-                    .UseSqlite($"Data Source={dbPath}")
-                    .Options;
-                return new GameDataContextFactory(options);
-            });
-
-            // Register EventBus
-            _services.AddSingleton<IEventBus>(sp =>
-            {
-                var eventBus = GetNode<EventBus>("/root/EventBus");
-
-                if (eventBus is null)
-                {
-                    throw new InvalidOperationException(
-                        "EventBus node not found in the scene tree."
-                    );
-                }
-                return eventBus;
-            });
-
-            // Register services
-            _services.AddSingleton<IGameDataService>(sp =>
-            {
-                var gameDataService = GetNode<GameDataService>("/root/GameDataService");
-                var factory = sp.GetRequiredService<IGameDataContextFactory>();
-                gameDataService.Initialize(factory);
-
-                // Ensure database is created
-                using var context = factory.CreateDbContext();
-                context.Database.EnsureCreated();
-
-                return gameDataService;
-            });
-
-            _serviceProvider = _services.BuildServiceProvider();
-        }
-
-        public static T GetService<T>()
-        {
-            if (_serviceProvider == null)
-            {
-                GD.PrintErr("ServiceContainer not initialized!");
-                return default;
-            }
-
-            return _serviceProvider.GetService<T>();
-        }
-
-        public static T GetRequiredService<T>()
-        {
-            if (_serviceProvider == null)
-            {
-                throw new InvalidOperationException("ServiceContainer not initialized!");
-            }
-
-            return _serviceProvider.GetRequiredService<T>();
-        }
-
-        public override void _ExitTree()
-        {
-            _serviceProvider?.Dispose();
-        }
+    public override void _ExitTree()
+    {
+        _serviceProvider?.Dispose();
     }
 }
