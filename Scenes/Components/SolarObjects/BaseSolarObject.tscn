@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3 uid="uid://bfvs6r6sqnd6l"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_h6oty"]
+
+[node name="BaseSolarObject" type="Node2D"]
+
+[node name="Icon" type="Sprite2D" parent="."]
+
+[node name="InteractArea" type="Area2D" parent="."]
+
+[node name="CollisionShape" type="CollisionShape2D" parent="InteractArea"]
+shape = SubResource("CircleShape2D_h6oty")
