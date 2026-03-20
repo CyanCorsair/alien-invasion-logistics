@@ -41,11 +41,12 @@
         <Compile Include="..\Source\Database\Models\Resources.cs" Link="LinkedSource\Database\Models\Resources.cs"/>
         <Compile Include="..\Source\Database\Models\Researches.cs" Link="LinkedSource\Database\Models\Researches.cs"/>
 
-        <!-- DTOs and Mapping Extensions -->
+        <!-- DTOs and Mapping Extensions (commented out - files not yet created)
         <Compile Include="..\Source\Database\Dtos\PlanetGameObjectDto.cs" Link="LinkedSource\Dtos\PlanetGameObjectDto.cs"/>
         <Compile Include="..\Source\Database\Dtos\StarGameObjectDto.cs" Link="LinkedSource\Dtos\StarGameObjectDto.cs"/>
         <Compile Include="..\Source\Database\Dtos\PlanetarySystemGameObjectDto.cs" Link="LinkedSource\Dtos\PlanetarySystemGameObjectDto.cs"/>
         <Compile Include="..\Source\Database\Dtos\CelestialBodyMappingExtensions.cs" Link="LinkedSource\Dtos\CelestialBodyMappingExtensions.cs"/>
+        -->
 
         <!-- Note: ResearchTypes.cs is NOT linked - stub types are used instead -->
 
@@ -57,6 +58,12 @@
         <Compile Include="..\Source\Events\IEventBus.cs" Link="LinkedSource\Events\IEventBus.cs"/>
         <Compile Include="..\Source\Events\IGameEvent.cs" Link="LinkedSource\Events\IGameEvent.cs"/>
         <Compile Include="..\Source\Events\GameEvents.cs" Link="LinkedSource\Events\GameEvents.cs"/>
+
+        <!-- Constants -->
+        <Compile Include="..\Source\Constants\SolarSystemConstants.cs" Link="LinkedSource\Constants\SolarSystemConstants.cs"/>
+
+        <!-- Utilities -->
+        <Compile Include="..\Source\Utilities\OrbitalMechanicsCalculator.cs" Link="LinkedSource\Utilities\OrbitalMechanicsCalculator.cs"/>
     </ItemGroup>
 
 </Project>

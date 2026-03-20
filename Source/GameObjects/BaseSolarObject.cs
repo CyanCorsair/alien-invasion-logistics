@@ -13,11 +13,15 @@ public record StaticPhysicsProperties
     public float OrbitalPeriod { get; set; }
     public float SemiMajorAxis { get; set; }
     public float Eccentricity { get; set; }
+    public CelestialBodyType BodyType { get; set; }
 }
 
 public record StaticGameplayProperties
 {
     public int SunlightLevel { get; set; }
+    public List<Orbit> Orbits { get; set; } = [];
+    public List<GameResource> ResourceDeposits { get; set; } = [];
+    public List<LandingSite> LandingSites { get; set; } = [];
 }
 
 public partial class BaseSolarObject : Node2D, IGameObject
@@ -43,6 +47,7 @@ public partial class BaseSolarObject : Node2D, IGameObject
         BaseSolarObject baseSolarObject = new BaseSolarObject();
         baseSolarObject.PhysicsProperties = new StaticPhysicsProperties()
         {
+            BodyType = baseNaturalSolarObject.BodyType,
             Mass = baseNaturalSolarObject.Mass,
             Radius = baseNaturalSolarObject.Radius,
             OrbitalPeriod = baseNaturalSolarObject.OrbitalPeriod,
@@ -53,6 +58,8 @@ public partial class BaseSolarObject : Node2D, IGameObject
         baseSolarObject.GameplayProperties = new StaticGameplayProperties()
         {
             SunlightLevel = baseNaturalSolarObject.SunlightLevel,
+            Orbits = baseNaturalSolarObject.Orbits ?? [],
+            LandingSites = baseNaturalSolarObject.LandingSites ?? [],
         };
 
         return baseSolarObject;

@@ -12,6 +12,8 @@ using Godot;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 
+#nullable enable
+
 namespace AlienInvasionLogistics.Source;
 
 public partial class GameDataService : Node, IGameDataService
@@ -100,7 +102,7 @@ public partial class GameDataService : Node, IGameDataService
         return await context.GameSessions.ToListAsync();
     }
 
-    public async Task<GameSession> LoadGameAsync(Guid saveId)
+    public async Task<GameSession?> LoadGameAsync(Guid saveId)
     {
         await using var context = _contextFactory.CreateDbContext();
 

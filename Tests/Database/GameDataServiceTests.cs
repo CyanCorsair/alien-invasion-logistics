@@ -77,24 +77,28 @@ public class TestableGameDataService : IGameDataService
 
     public async Task<GameSession?> LoadGameAsync(string saveId)
     {
-        await using var context = _contextFactory.CreateDbContext();
-
         if (string.IsNullOrWhiteSpace(saveId) || !Guid.TryParse(saveId, out var guid))
         {
             return null;
         }
 
+        return await LoadGameAsync(guid);
+    }
+
+    public async Task<GameSession?> LoadGameAsync(Guid saveId)
+    {
+        await using var context = _contextFactory.CreateDbContext();
+
         var save = await context.GameSessions
             .Include(gs => gs.Players)
-            .FirstOrDefaultAsync(gs => gs.Id == guid);
+            .FirstOrDefaultAsync(gs => gs.Id == saveId);
 
         if (save != null)
         {
             _eventBus.Publish(new GameLoadedEvent(save.Id, save.SessionName));
-            return save;
         }
 
-        return null;
+        return save;
     }
 }
 

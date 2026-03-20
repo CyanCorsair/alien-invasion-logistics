@@ -13,6 +13,13 @@ public enum StarSize
     HyperGiant
 }
 
+public enum OrbitType
+{
+    LowOrbit,           // LEO - ~1.2x body radius
+    GeostationaryOrbit, // GEO - orbital period matches rotation
+    HighOrbit           // HEO - near Hill sphere limit
+}
+
 public class Star : IStellarBody
 {
     public Color StarColor { get; set; }

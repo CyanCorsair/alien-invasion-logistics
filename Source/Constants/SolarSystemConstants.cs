@@ -64,4 +64,177 @@ public static class SolarSystemConstants
     ///     Default orbital speed when radius is below minimum threshold
     /// </summary>
     public const float DefaultOrbitalSpeed = 1f;
+
+    // Orbital altitude calculation constants
+
+    /// <summary>
+    ///     Multiplier for Low Orbit altitude (LEO = radius * multiplier - radius)
+    /// </summary>
+    public const float LowOrbitMultiplier = 1.2f;
+
+    /// <summary>
+    ///     Multiplier for High Orbit altitude relative to body radius
+    /// </summary>
+    public const float HighOrbitMultiplier = 10f;
+
+    /// <summary>
+    ///     Practical limit for Hill sphere usage (0.5 = 50% of Hill sphere radius)
+    /// </summary>
+    public const float HillSpherePracticalLimit = 0.5f;
+
+    /// <summary>
+    ///     Earth mass in kilograms for reference calculations
+    /// </summary>
+    public const float EarthMassKg = 5.972e24f;
+
+    /// <summary>
+    ///     Default rotation period in hours (Earth-like)
+    /// </summary>
+    public const float DefaultRotationPeriodHours = 24f;
+
+    // Asteroid belt generation constants
+
+    /// <summary>
+    ///     Inner edge of asteroid belt as multiplier of BaseOrbitalRadius
+    /// </summary>
+    public const float AsteroidBeltInnerMultiplier = 2.5f;
+
+    /// <summary>
+    ///     Outer edge of asteroid belt as multiplier of BaseOrbitalRadius
+    /// </summary>
+    public const float AsteroidBeltOuterMultiplier = 3.5f;
+
+    /// <summary>
+    ///     Minimum number of asteroids in a belt
+    /// </summary>
+    public const int MinAsteroidBeltObjects = 5;
+
+    /// <summary>
+    ///     Maximum number of asteroids in a belt
+    /// </summary>
+    public const int MaxAsteroidBeltObjects = 15;
+
+    // Comet generation constants
+
+    /// <summary>
+    ///     Inner edge of comet zone as multiplier of BaseOrbitalRadius
+    /// </summary>
+    public const float CometZoneMinMultiplier = 8f;
+
+    /// <summary>
+    ///     Outer edge of comet zone as multiplier of BaseOrbitalRadius
+    /// </summary>
+    public const float CometZoneMaxMultiplier = 20f;
+
+    /// <summary>
+    ///     Minimum number of comets in a system
+    /// </summary>
+    public const int MinComets = 2;
+
+    /// <summary>
+    ///     Maximum number of comets in a system
+    /// </summary>
+    public const int MaxComets = 8;
+
+    /// <summary>
+    ///     Minimum eccentricity for comet orbits
+    /// </summary>
+    public const float CometMinEccentricity = 0.5f;
+
+    /// <summary>
+    ///     Maximum eccentricity for comet orbits
+    /// </summary>
+    public const float CometMaxEccentricity = 0.95f;
+
+    // Rotation period constants (in hours)
+
+    /// <summary>
+    ///     Minimum rotation period for gas giants (Jupiter/Saturn-like)
+    /// </summary>
+    public const float GasGiantMinRotationHours = 10f;
+
+    /// <summary>
+    ///     Maximum rotation period for gas giants (Jupiter/Saturn-like)
+    /// </summary>
+    public const float GasGiantMaxRotationHours = 17f;
+
+    /// <summary>
+    ///     Minimum rotation period for ice giants (Uranus/Neptune-like)
+    /// </summary>
+    public const float IceGiantMinRotationHours = 14f;
+
+    /// <summary>
+    ///     Maximum rotation period for ice giants (Uranus/Neptune-like)
+    /// </summary>
+    public const float IceGiantMaxRotationHours = 17f;
+
+    /// <summary>
+    ///     Minimum rotation period for terrestrial planets
+    /// </summary>
+    public const float TerrestrialMinRotationHours = 10f;
+
+    /// <summary>
+    ///     Maximum rotation period for terrestrial planets
+    /// </summary>
+    public const float TerrestrialMaxRotationHours = 50f;
+
+    /// <summary>
+    ///     Minimum rotation period for dwarf planets
+    /// </summary>
+    public const float DwarfPlanetMinRotationHours = 10f;
+
+    /// <summary>
+    ///     Maximum rotation period for dwarf planets
+    /// </summary>
+    public const float DwarfPlanetMaxRotationHours = 110f;
+
+    /// <summary>
+    ///     Minimum rotation period for moons (non-tidally locked)
+    /// </summary>
+    public const float MoonMinRotationHours = 10f;
+
+    /// <summary>
+    ///     Maximum rotation period for moons (non-tidally locked)
+    /// </summary>
+    public const float MoonMaxRotationHours = 60f;
+
+    /// <summary>
+    ///     Minimum rotation period for stars (in days, converted to hours)
+    /// </summary>
+    public const float StarMinRotationDays = 10f;
+
+    /// <summary>
+    ///     Maximum rotation period for stars (in days, converted to hours)
+    /// </summary>
+    public const float StarMaxRotationDays = 30f;
+
+    /// <summary>
+    ///     Minimum rotation period for asteroids
+    /// </summary>
+    public const float AsteroidMinRotationHours = 2f;
+
+    /// <summary>
+    ///     Maximum rotation period for asteroids
+    /// </summary>
+    public const float AsteroidMaxRotationHours = 22f;
+
+    /// <summary>
+    ///     Minimum rotation period for comets
+    /// </summary>
+    public const float CometMinRotationHours = 5f;
+
+    /// <summary>
+    ///     Maximum rotation period for comets
+    /// </summary>
+    public const float CometMaxRotationHours = 55f;
+
+    /// <summary>
+    ///     Probability of tidal locking for inner planets
+    /// </summary>
+    public const float InnerPlanetTidalLockProbability = 0.3f;
+
+    /// <summary>
+    ///     Probability of tidal locking for moons
+    /// </summary>
+    public const float MoonTidalLockProbability = 0.7f;
 }

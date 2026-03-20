@@ -42,6 +42,13 @@ namespace AlienInvasionLogistics.Source.Types
         Minerals
     }
 
+    public enum OrbitType
+    {
+        LowOrbit,
+        GeostationaryOrbit,
+        HighOrbit
+    }
+
     public class StartingResources
     {
         public int Minerals;
@@ -50,7 +57,7 @@ namespace AlienInvasionLogistics.Source.Types
 
     public class StartingResearch
     {
-        public List<ResearchItem>? StartingResearch;
+        public List<ResearchItem> StartingResearchList { get; set; } = new();
     }
 }
 

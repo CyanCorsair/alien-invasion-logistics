@@ -283,7 +283,8 @@ public class CelestialBodyTests
 
     [Theory]
     [InlineData(CelestialBodyType.Star)]
-    [InlineData(CelestialBodyType.GiantPlanet)]
+    [InlineData(CelestialBodyType.GasGiant)]
+    [InlineData(CelestialBodyType.IceGiant)]
     [InlineData(CelestialBodyType.LargePlanet)]
     [InlineData(CelestialBodyType.Planet)]
     [InlineData(CelestialBodyType.DwarfPlanet)]

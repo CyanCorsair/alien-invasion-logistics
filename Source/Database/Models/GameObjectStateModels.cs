@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using AlienInvasionLogistics.Source.Types;
 using Microsoft.EntityFrameworkCore;
 
 namespace AlienInvasionLogistics.Source.Database.Models;
@@ -50,6 +51,7 @@ public class BaseNaturalSolarObject : BaseObjectType
     public float OrbitalPeriod { get; set; }
     public float SemiMajorAxis { get; set; }
     public float Eccentricity { get; set; }
+    public float RotationPeriod { get; set; } = 24f; // Rotation period in hours
     // Resources and orbits
     public List<GameResource> ResourceDeposits { get; set; } = [];
     public int SunlightLevel { get; set; }
@@ -73,6 +75,11 @@ public class BaseNaturalSolarObject : BaseObjectType
 public class Orbit
 {
     [Required][MaxLength(128)] public string Name { get; set; } = "Orbit 1";
+    public OrbitType OrbitType { get; set; }
+    public float Altitude { get; set; } // Altitude above body surface
+    public float OrbitalRadius { get; set; } // Distance from body center
+    public float OrbitalPeriodAtAltitude { get; set; } // Orbital period in hours
+    public float OrbitalVelocity { get; set; } // Orbital velocity in km/s
     public int MaxStationaryArtificialObjects { get; set; }
     public int MaxMobileArtificialObjects { get; set; }
     public int CurrentStationaryArtificialObjects { get; set; }
@@ -121,7 +128,8 @@ public class BaseObjectType
 public enum CelestialBodyType
 {
     Star,
-    GiantPlanet,
+    GasGiant,       // >= 50 Earth masses (Jupiter/Saturn-like)
+    IceGiant,       // 10-50 Earth masses (Uranus/Neptune-like)
     LargePlanet,
     Planet,
     DwarfPlanet,

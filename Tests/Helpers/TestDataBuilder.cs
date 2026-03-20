@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using AlienInvasionLogistics.Source.Database.Dtos;
 using AlienInvasionLogistics.Source.Database.Models;
 using AlienInvasionLogistics.Source.Types;
 using AlienInvasionLogistics.Source.UI.MenuControllers;
@@ -212,61 +211,6 @@ public static class TestDataBuilder
         };
     }
 
-    // ==================== DTOs ====================
-
-    public static PlanetGameObjectDto CreatePlanetDto()
-    {
-        return new PlanetGameObjectDto
-        {
-            Id = Guid.NewGuid(),
-            Name = "Test Planet",
-            BodyType = CelestialBodyType.Planet,
-            PositionX = 100f,
-            PositionY = 200f,
-            Mass = 1000f,
-            Radius = 100f,
-            OrbitalPeriod = 365f,
-            SemiMajorAxis = 1000f,
-            Eccentricity = 0.02f,
-            SunlightLevel = 100,
-            ResourceDeposits = new List<GameResource>(),
-            Orbits = new List<Orbit>(),
-            LandingSites = new List<LandingSite>()
-        };
-    }
-
-    public static StarGameObjectDto CreateStarDto()
-    {
-        return new StarGameObjectDto
-        {
-            Id = Guid.NewGuid(),
-            Name = "Test Star",
-            BodyType = CelestialBodyType.Star,
-            PositionX = 0f,
-            PositionY = 0f,
-            Mass = 1000000f,
-            Radius = 50000f,
-            OrbitalPeriod = 0f,
-            SemiMajorAxis = 0f,
-            Eccentricity = 0f,
-            SiblingBodyIds = new List<Guid>(),
-            ResourceDeposits = new List<GameResource>(),
-            Orbits = new List<Orbit>()
-        };
-    }
-
-    public static PlanetarySystemGameObjectDto CreatePlanetarySystemDto()
-    {
-        return new PlanetarySystemGameObjectDto
-        {
-            Id = Guid.NewGuid(),
-            Name = "Test Planetary System",
-            CentralMassId = Guid.NewGuid(),
-            CelestialBodyIds = new List<Guid>(),
-            PlanetarySystemIds = new List<Guid>()
-        };
-    }
-
     // ==================== GameSettings ====================
 
     public static GameSettings CreateDefaultGameSettings()
@@ -335,7 +279,6 @@ public static class TestDataBuilder
     {
         return new StrategicWorldState
         {
-            Id = Guid.NewGuid(),
             Name = "Test Strategic World"
         };
     }

@@ -10,7 +10,8 @@ public static class CelestialBodyClassifier
 {
     // Mass thresholds (Earth masses)
     private const float StarMinMass = 4000f;           // ~13 Jupiter masses (brown dwarf minimum)
-    private const float GiantPlanetMinMass = 50f;      // ~Neptune mass and above
+    private const float GasGiantMinMass = 50f;         // Hydrogen/helium composition (Jupiter/Saturn-like)
+    private const float IceGiantMinMass = 10f;         // Water/ammonia/methane composition (Uranus/Neptune-like)
     private const float LargePlanetMinMass = 2f;       // Super-Earth threshold
     private const float PlanetMinMass = 0.1f;          // Terrestrial planet minimum
     private const float DwarfPlanetMinMass = 0.001f;   // Hydrostatic equilibrium threshold
@@ -41,15 +42,20 @@ public static class CelestialBodyClassifier
         // Moons: any body orbiting a planet (not a star)
         if (parentBodyType is CelestialBodyType.Planet
             or CelestialBodyType.LargePlanet
-            or CelestialBodyType.GiantPlanet
+            or CelestialBodyType.GasGiant
+            or CelestialBodyType.IceGiant
             or CelestialBodyType.DwarfPlanet)
         {
             return CelestialBodyType.Moon;
         }
 
-        // Giant planets: gas/ice giants
-        if (mass >= GiantPlanetMinMass)
-            return CelestialBodyType.GiantPlanet;
+        // Gas giants: massive hydrogen/helium bodies (>= 50 Earth masses)
+        if (mass >= GasGiantMinMass)
+            return CelestialBodyType.GasGiant;
+
+        // Ice giants: intermediate mass with water/ammonia/methane (10-50 Earth masses)
+        if (mass >= IceGiantMinMass)
+            return CelestialBodyType.IceGiant;
 
         // Large planets: super-Earths, mini-Neptunes
         if (mass >= LargePlanetMinMass)

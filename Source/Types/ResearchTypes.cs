@@ -6,5 +6,5 @@ namespace AlienInvasionLogistics.Source.Types;
 
 public class StartingResearch
 {
-    public List<ResearchItem> StartingResearchList;
+    public List<ResearchItem> StartingResearchList { get; set; } = new();
 }
