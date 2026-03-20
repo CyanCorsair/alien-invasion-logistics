@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AlienInvasionLogistics.Source.Database.Models;
 
+[PrimaryKey("Id")]
 public class Player
 {
     [Key] public Guid Id { get; set; } = Guid.NewGuid();

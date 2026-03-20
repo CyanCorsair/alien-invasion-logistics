@@ -18,7 +18,7 @@ namespace AlienInvasionLogistics.Source.Services;
 public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
 {
     // TODO: Implement procedural planet name generation using this array
-    private static readonly string[] PLANET_NAMES =
+    private static readonly string[] PlanetNames =
     {
         "Mercury",
         "Venus",
@@ -73,7 +73,7 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
         solarSystem.PlanetarySystems = new List<PlanetarySystem>();
         solarSystem.PlanetarySystemIds = new List<Guid>();
 
-        int planetCount = Math.Min(settings.CelestialBodyCount, SolarSystemConstants.MAX_PLANETS);
+        int planetCount = Math.Min(settings.CelestialBodyCount, SolarSystemConstants.MaxPlanets);
         float previousDistance = 0f;
 
         for (int i = 0; i < planetCount; i++)
@@ -89,9 +89,9 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
         return solarSystem;
     }
 
-    private CelestialBody GenerateCentralStar(Star starSettings)
+    private BaseNaturalSolarObject GenerateCentralStar(Star starSettings)
     {
-        var star = new CelestialBody
+        var star = new BaseNaturalSolarObject
         {
             Id = Guid.NewGuid(),
             Name = starSettings.DisplayName ?? "Sol",
@@ -113,12 +113,11 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
 
     private PlanetarySystem GeneratePlanetarySystem(int index, int totalPlanets, Guid starId, ref float previousDistance)
     {
-        var bodyType = DetermineBodyType(index, totalPlanets);
-        string planetName = index < PLANET_NAMES.Length ? PLANET_NAMES[index] : $"Planet {index + 1}";
+        string planetName = index < PlanetNames.Length ? PlanetNames[index] : $"Planet {index + 1}";
 
         float distance = CalculateOrbitalDistance(index, ref previousDistance);
 
-        var planet = GeneratePlanet(planetName, bodyType, distance, starId);
+        var planet = GeneratePlanet(planetName, distance, starId);
 
         var system = new PlanetarySystem
         {
@@ -126,17 +125,17 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
             Name = $"{planetName} System",
             CentralMass = planet,
             CentralMassId = planet.Id,
-            CelestialBodies = new List<CelestialBody>(),
+            CelestialBodies = new List<BaseNaturalSolarObject>(),
             CelestialBodyIds = new List<Guid>()
         };
 
-        if ((bodyType == CelestialBodyType.LargePlanet || bodyType == CelestialBodyType.GiantPlanet)
+        if ((planet.BodyType == CelestialBodyType.LargePlanet || planet.BodyType == CelestialBodyType.GiantPlanet)
             && _random.Value.NextDouble() < 0.25)
         {
             int moonCount = _random.Value.Next(1, 4);
             for (int m = 0; m < moonCount; m++)
             {
-                var moon = GenerateMoon(m, planet.Id, planet.PositionX, planet.PositionY);
+                var moon = GenerateMoon(m, planet.Id, planet.BodyType, planet.PositionX, planet.PositionY);
                 system.CelestialBodies.Add(moon);
                 system.CelestialBodyIds.Add(moon.Id);
             }
@@ -145,20 +144,22 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
         return system;
     }
 
-    private CelestialBody GeneratePlanet(string name, CelestialBodyType bodyType, float distance, Guid parentId)
+    private BaseNaturalSolarObject GeneratePlanet(string name, float distance, Guid parentId)
     {
-        float mass = GenerateMass(bodyType);
-        float radius = CalculateRadius(mass, bodyType);
+        float mass = GenerateMass(distance);
+        float radius = CalculateRadius(mass);
         float eccentricity = GenerateEccentricity();
         float orbitalPeriod = CalculateOrbitalPeriod(distance);
+
+        var bodyType = CelestialBodyClassifier.Classify(mass, radius, eccentricity, CelestialBodyType.Star);
 
         float angle = (float)(_random.Value.NextDouble() * 2 * Math.PI);
         float posX = distance * MathF.Cos(angle);
         float posY = distance * MathF.Sin(angle);
 
-        int sunlightLevel = (int)(100 * (1.0f / (1.0f + distance / SolarSystemConstants.BASE_ORBITAL_RADIUS)));
+        int sunlightLevel = (int)(100 * (1.0f / (1.0f + distance / SolarSystemConstants.BaseOrbitalRadius)));
 
-        var planet = new CelestialBody
+        var planet = new BaseNaturalSolarObject
         {
             Id = Guid.NewGuid(),
             Name = name,
@@ -180,26 +181,32 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
         return planet;
     }
 
-    private CelestialBody GenerateMoon(int index, Guid parentPlanetId, float planetX, float planetY)
+    private BaseNaturalSolarObject GenerateMoon(int index, Guid parentPlanetId, CelestialBodyType parentBodyType, float planetX, float planetY)
     {
         float moonDistance = 20f + (index * 15f);
         float angle = (float)(_random.Value.NextDouble() * 2 * Math.PI);
 
-        var moon = new CelestialBody
+        float mass = (float)(_random.Value.NextDouble() * 0.1 + 0.01);
+        float radius = (float)(_random.Value.NextDouble() * 5 + 2);
+        float eccentricity = (float)(_random.Value.NextDouble() * 0.05);
+
+        var bodyType = CelestialBodyClassifier.Classify(mass, radius, eccentricity, parentBodyType);
+
+        var moon = new BaseNaturalSolarObject
         {
             Id = Guid.NewGuid(),
             Name = $"Moon {index + 1}",
-            BodyType = CelestialBodyType.Moon,
+            BodyType = bodyType,
             PositionX = planetX + moonDistance * MathF.Cos(angle),
             PositionY = planetY + moonDistance * MathF.Sin(angle),
-            Mass = (float)(_random.Value.NextDouble() * 0.1 + 0.01),
-            Radius = (float)(_random.Value.NextDouble() * 5 + 2),
+            Mass = mass,
+            Radius = radius,
             OrbitalPeriod = CalculateOrbitalPeriod(moonDistance) * 0.1f,
             SemiMajorAxis = moonDistance,
-            Eccentricity = (float)(_random.Value.NextDouble() * 0.05),
+            Eccentricity = eccentricity,
             ParentBodyId = parentPlanetId,
             SunlightLevel = 50,
-            ResourceDeposits = GenerateResources(CelestialBodyType.Moon, moonDistance),
+            ResourceDeposits = GenerateResources(bodyType, moonDistance),
             Orbits = GenerateOrbitalZones(1, 2),
             LandingSites = GenerateLandingSites(1, 2)
         };
@@ -207,24 +214,11 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
         return moon;
     }
 
-    private CelestialBodyType DetermineBodyType(int index, int totalPlanets)
-    {
-        double position = (double)index / totalPlanets;
-
-        if (position < 0.4)
-            return _random.Value.NextDouble() < 0.7 ? CelestialBodyType.Planet : CelestialBodyType.LargePlanet;
-
-        if (position < 0.7)
-            return _random.Value.NextDouble() < 0.5 ? CelestialBodyType.LargePlanet : CelestialBodyType.GiantPlanet;
-
-        return _random.Value.NextDouble() < 0.6 ? CelestialBodyType.GiantPlanet : CelestialBodyType.DwarfPlanet;
-    }
-
     private float CalculateOrbitalDistance(int index, ref float previousDistance)
     {
-        float baseDistance = SolarSystemConstants.BASE_ORBITAL_RADIUS * MathF.Pow(1.7f, index);
+        float baseDistance = SolarSystemConstants.BaseOrbitalRadius * MathF.Pow(1.7f, index);
 
-        float variance = (float)(_random.Value.NextDouble() - 0.5) * SolarSystemConstants.ORBITAL_RADIUS_VARIANCE;
+        float variance = (float)(_random.Value.NextDouble() - 0.5) * SolarSystemConstants.OrbitalRadiusVariance;
         float distance = baseDistance + variance;
 
         if (distance < previousDistance + 50f)
@@ -234,22 +228,46 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
         return distance;
     }
 
-    private float GenerateMass(CelestialBodyType bodyType)
+    /// <summary>
+    /// Generates mass based on orbital distance, following the pattern of our solar system:
+    /// inner planets tend to be smaller/rocky, mid-range has gas giants, outer range has ice giants and dwarf planets.
+    /// </summary>
+    private float GenerateMass(float distance)
     {
-        return bodyType switch
+        float normalizedDistance = distance / SolarSystemConstants.BaseOrbitalRadius;
+        double roll = _random.Value.NextDouble();
+
+        // Inner zone (< 2x base): rocky planets
+        if (normalizedDistance < 2f)
         {
-            CelestialBodyType.DwarfPlanet => (float)(_random.Value.NextDouble() * 0.5 + 0.01),
-            CelestialBodyType.Planet => (float)(_random.Value.NextDouble() * 2 + 0.5),
-            CelestialBodyType.LargePlanet => (float)(_random.Value.NextDouble() * 5 + 2),
-            CelestialBodyType.GiantPlanet => (float)(_random.Value.NextDouble() * 200 + 50),
-            CelestialBodyType.Moon => (float)(_random.Value.NextDouble() * 0.1 + 0.01),
-            _ => 1.0f
-        };
+            return roll < 0.7f
+                ? (float)(_random.Value.NextDouble() * 1.5 + 0.1)   // Terrestrial (0.1 - 1.6 Earth masses)
+                : (float)(_random.Value.NextDouble() * 5 + 2);      // Super-Earth (2 - 7 Earth masses)
+        }
+
+        // Middle zone (2-6x base): gas/ice giants
+        if (normalizedDistance < 6f)
+        {
+            return roll < 0.6f
+                ? (float)(_random.Value.NextDouble() * 200 + 50)    // Gas giant (50 - 250 Earth masses)
+                : (float)(_random.Value.NextDouble() * 30 + 10);    // Ice giant (10 - 40 Earth masses)
+        }
+
+        // Outer zone (> 6x base): ice giants, dwarf planets, small bodies
+        if (roll < 0.3f)
+            return (float)(_random.Value.NextDouble() * 20 + 10);   // Ice giant
+        if (roll < 0.7f)
+            return (float)(_random.Value.NextDouble() * 0.1 + 0.001); // Dwarf planet
+        return (float)(_random.Value.NextDouble() * 0.001);          // Minor planet/asteroid
     }
 
-    private float CalculateRadius(float mass, CelestialBodyType bodyType)
+    /// <summary>
+    /// Calculates radius from mass. Gas giants have lower density, so they get a larger radius multiplier.
+    /// </summary>
+    private float CalculateRadius(float mass)
     {
-        float multiplier = bodyType == CelestialBodyType.GiantPlanet ? 3.0f : 1.0f;
+        // Gas giants (> 50 Earth masses) have lower density
+        float multiplier = mass >= 50f ? 3.0f : 1.0f;
         return MathF.Pow(mass, 1.0f / 3.0f) * 10f * multiplier;
     }
 
@@ -267,9 +285,9 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
     private float CalculateOrbitalPeriod(float semiMajorAxis)
     {
         // Prevent division by zero
-        if (!(SolarSystemConstants.BASE_ORBITAL_RADIUS <= 0))
-            return MathF.Sqrt(MathF.Pow(semiMajorAxis / SolarSystemConstants.BASE_ORBITAL_RADIUS, 3))
-                   * SolarSystemConstants.ORBITAL_SPEED_BASE;
+        if (!(SolarSystemConstants.BaseOrbitalRadius <= 0))
+            return MathF.Sqrt(MathF.Pow(semiMajorAxis / SolarSystemConstants.BaseOrbitalRadius, 3))
+                   * SolarSystemConstants.OrbitalSpeedBase;
     }
 
     private List<GameResource> GenerateResources(CelestialBodyType bodyType, float distance)
@@ -279,7 +297,7 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
 
         for (int i = 0; i < resourceCount; i++)
         {
-            bool isMinerals = distance < SolarSystemConstants.BASE_ORBITAL_RADIUS * 3
+            bool isMinerals = distance < SolarSystemConstants.BaseOrbitalRadius * 3
                 ? _random.Value.NextDouble() < 0.7
                 : _random.Value.NextDouble() < 0.3;
 

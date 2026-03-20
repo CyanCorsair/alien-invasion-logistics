@@ -29,6 +29,8 @@ public struct GameSettings
     public Guid PlayerNationId;
     public int StartingMineralModifier;
     public int StartingEnergyModifier;
+    public StartingResources StartingResources;
+    public StartingResearch  StartingResearch;
     public int AiPlayerCount;
     public string PlayerName;
     public string SessionName;
@@ -37,34 +39,34 @@ public struct GameSettings
 
 public partial class NewGameScreenController : Panel
 {
-    private const int MIN_PLANETS = 1;
-    private const int MAX_PLANETS = 20;
-    private const int DEFAULT_PLANETS = 5;
+    private const int MinPlanets = 1;
+    private const int MaxPlanets = 20;
+    private const int DefaultPlanets = 5;
 
-    private const StarType DEFAULT_STAR_TYPE = StarType.MainSequence;
+    private const StarType DefaultStarType = StarType.MainSequence;
 
-    private const StartingResourcesMultiplier DEFAULT_STARTING_RESOURCES =
+    private const StartingResourcesMultiplier DefaultStartingResources =
         StartingResourcesMultiplier.Medium;
 
-    private Button CancelSetupButton;
-    private double numberOfPlanets = DEFAULT_PLANETS;
+    private Button _cancelSetupButton;
+    private double _numberOfPlanets = DefaultPlanets;
 
-    private HSlider planetCountControl;
-    private RichTextLabel planetCountText;
-    private LineEdit playerNameControl;
+    private HSlider _planetCountControl;
+    private RichTextLabel _planetCountText;
+    private LineEdit _playerNameControl;
 
-    private Button StartGameButton;
-    private StartingResourcesMultiplier startingResourcesMultiplier = DEFAULT_STARTING_RESOURCES;
-    private OptionButton startingResourcesMultiplierControl;
-    private StarType starType = DEFAULT_STAR_TYPE;
+    private Button _startGameButton;
+    private StartingResourcesMultiplier _startingResourcesMultiplier = DefaultStartingResources;
+    private OptionButton _startingResourcesMultiplierControl;
+    private StarType _starType = DefaultStarType;
 
-    private OptionButton starTypeControl;
+    private OptionButton _starTypeControl;
 
     private int StartingEnergyResources
     {
         get
         {
-            switch (startingResourcesMultiplier)
+            switch (_startingResourcesMultiplier)
             {
                 case StartingResourcesMultiplier.Low:
                     return 100;
@@ -82,7 +84,7 @@ public partial class NewGameScreenController : Panel
     {
         get
         {
-            switch (startingResourcesMultiplier)
+            switch (_startingResourcesMultiplier)
             {
                 case StartingResourcesMultiplier.Low:
                     return 1000;
@@ -101,34 +103,34 @@ public partial class NewGameScreenController : Panel
 
     public override void _Ready()
     {
-        playerNameControl = GetNode<LineEdit>(
+        _playerNameControl = GetNode<LineEdit>(
             "SettingsPanel/BasicSettings/PlayerNameContainer/PlayerNameTextField"
         );
-        playerNameControl.Text = PlayerName;
+        _playerNameControl.Text = PlayerName;
 
-        planetCountControl = GetNode<HSlider>(
+        _planetCountControl = GetNode<HSlider>(
             "SettingsPanel/BasicSettings/PlanetCountContainer/PlanetCountRange"
         );
-        planetCountText = GetNode<RichTextLabel>(
+        _planetCountText = GetNode<RichTextLabel>(
             "SettingsPanel/BasicSettings/PlanetCountContainer/PlanetCountText"
         );
 
-        starTypeControl = GetNode<OptionButton>(
+        _starTypeControl = GetNode<OptionButton>(
             "SettingsPanel/BasicSettings/StarTypeCobtainer/StarTypeDropdown/StarTypeOptions"
         );
-        startingResourcesMultiplierControl = GetNode<OptionButton>(
+        _startingResourcesMultiplierControl = GetNode<OptionButton>(
             "SettingsPanel/BasicSettings/StartingResourcesContainer/StartingResourcesDropdown/StartingResourceOptions"
         );
 
-        StartGameButton = GetNode<Button>("ControlsPanel/ControlsContainer/StartGameButton");
-        CancelSetupButton = GetNode<Button>("ControlsPanel/ControlsContainer/CancelStartButton");
+        _startGameButton = GetNode<Button>("ControlsPanel/ControlsContainer/StartGameButton");
+        _cancelSetupButton = GetNode<Button>("ControlsPanel/ControlsContainer/CancelStartButton");
 
-        planetCountControl.ValueChanged += OnPlanetCountChanged;
-        starTypeControl.ItemSelected += OnStarTypeChanged;
-        startingResourcesMultiplierControl.ItemSelected += OnStartingResourcesMultiplierChanged;
+        _planetCountControl.ValueChanged += OnPlanetCountChanged;
+        _starTypeControl.ItemSelected += OnStarTypeChanged;
+        _startingResourcesMultiplierControl.ItemSelected += OnStartingResourcesMultiplierChanged;
 
-        StartGameButton.Pressed += OnStartNewGame;
-        CancelSetupButton.Pressed += OnCancelSetup;
+        _startGameButton.Pressed += OnStartNewGame;
+        _cancelSetupButton.Pressed += OnCancelSetup;
     }
 
     public override void _Process(double delta)
@@ -137,50 +139,50 @@ public partial class NewGameScreenController : Panel
 
     public override void _ExitTree()
     {
-        planetCountControl.ValueChanged -= OnPlanetCountChanged;
-        starTypeControl.ItemSelected -= OnStarTypeChanged;
-        startingResourcesMultiplierControl.ItemSelected -= OnStartingResourcesMultiplierChanged;
+        _planetCountControl.ValueChanged -= OnPlanetCountChanged;
+        _starTypeControl.ItemSelected -= OnStarTypeChanged;
+        _startingResourcesMultiplierControl.ItemSelected -= OnStartingResourcesMultiplierChanged;
 
-        StartGameButton.Pressed -= OnStartNewGame;
-        CancelSetupButton.Pressed -= OnCancelSetup;
+        _startGameButton.Pressed -= OnStartNewGame;
+        _cancelSetupButton.Pressed -= OnCancelSetup;
     }
 
     private void OnPlanetCountChanged(double newPlanetCount)
     {
-        if (newPlanetCount < MIN_PLANETS || newPlanetCount > MAX_PLANETS)
+        if (newPlanetCount < MinPlanets || newPlanetCount > MaxPlanets)
         {
             GD.PrintErr(
-                $"Planet count {newPlanetCount} is out of bounds. It must be between {MIN_PLANETS} and {MAX_PLANETS}."
+                $"Planet count {newPlanetCount} is out of bounds. It must be between {MinPlanets} and {MaxPlanets}."
             );
             return;
         }
 
-        numberOfPlanets = newPlanetCount;
-        planetCountText.Text = numberOfPlanets.ToString(CultureInfo.InvariantCulture);
+        _numberOfPlanets = newPlanetCount;
+        _planetCountText.Text = _numberOfPlanets.ToString(CultureInfo.InvariantCulture);
     }
 
     private void OnStarTypeChanged(long index)
     {
-        starTypeControl.Selected = (int)index;
-        starType = (StarType)starTypeControl.Selected;
+        _starTypeControl.Selected = (int)index;
+        _starType = (StarType)_starTypeControl.Selected;
     }
 
     private void OnStartingResourcesMultiplierChanged(long index)
     {
-        startingResourcesMultiplier = (StartingResourcesMultiplier)
-            startingResourcesMultiplierControl.Selected;
+        _startingResourcesMultiplier = (StartingResourcesMultiplier)
+            _startingResourcesMultiplierControl.Selected;
     }
 
     private async void OnStartNewGame()
     {
-        PlayerName = playerNameControl.Text;
-        numberOfPlanets = planetCountControl.Value;
-        starType = (StarType)starTypeControl.Selected;
-        startingResourcesMultiplier = (StartingResourcesMultiplier)
-            startingResourcesMultiplierControl.Selected;
+        PlayerName = _playerNameControl.Text;
+        _numberOfPlanets = _planetCountControl.Value;
+        _starType = (StarType)_starTypeControl.Selected;
+        _startingResourcesMultiplier = (StartingResourcesMultiplier)
+            _startingResourcesMultiplierControl.Selected;
 
         GD.Print(
-            $"Starting new game with {numberOfPlanets} planets, star type {starType}, starting resources: energy {StartingEnergyResources} | mineral {StartingMineralResources}, player name {PlayerName}"
+            $"Starting new game with {_numberOfPlanets} planets, star type {_starType}, starting resources: energy {StartingEnergyResources} | mineral {StartingMineralResources}, player name {PlayerName}"
         );
 
         StartingResearch startingResearch = new();
@@ -190,10 +192,12 @@ public partial class NewGameScreenController : Panel
         GameSettings settings =
             new()
             {
-                NumberOfPlanets = (int)numberOfPlanets,
-                StarType = starType,
+                NumberOfPlanets = (int)_numberOfPlanets,
+                StarType = _starType,
                 PlayerName = PlayerName,
                 SessionName = SessionName,
+                StartingResearch = startingResearch,
+                StartingResources = startingResources
             };
 
         try
@@ -208,6 +212,8 @@ public partial class NewGameScreenController : Panel
 
             // Create new game asynchronously
             await gameDataService.CreateNewGameAsync(settings);
+
+            ChangeToGameScene();
         }
         catch (Exception ex)
         {

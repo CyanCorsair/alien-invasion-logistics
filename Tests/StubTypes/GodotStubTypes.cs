@@ -44,13 +44,13 @@ namespace AlienInvasionLogistics.Source.Types
 
     public class StartingResources
     {
-        public int minerals;
-        public int energy;
+        public int Minerals;
+        public int Energy;
     }
 
     public class StartingResearch
     {
-        public List<ResearchItem>? startingResearch;
+        public List<ResearchItem>? StartingResearch;
     }
 }
 

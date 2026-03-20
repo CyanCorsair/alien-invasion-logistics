@@ -1,4 +1,5 @@
 using System;
+using AlienInvasionLogistics.Source.Events;
 using AlienInvasionLogistics.Source.Utilities;
 using Godot;
 
@@ -17,13 +18,30 @@ public partial class MainGameScene : Node
     private const string StratWorldScenePath = "res://Scenes/Components/SolarSystemBase.tscn";
     private const string TacWorldScenePath = "res://Scenes/Components/TacWorldBase.tscn";
 
+    private GameEventBus  _eventBus;
+    
     private Control _activeUi;
     private Node2D _activeWorld;
+    public Guid CurrentGameDataId { get; set; } = Guid.Empty;
+    public Guid NextGameDataId { get; set; } = Guid.Empty;
 
     public GameMode CurrentMode { get; private set; }
 
     public override void _Ready()
     {
+        _eventBus.Subscribe<GameCreatedEvent>(@event =>
+        {
+            if (CurrentGameDataId == Guid.Empty && NextGameDataId == Guid.Empty)
+            {
+                CurrentGameDataId = @event.GameDataId;
+            }
+
+            if (@event.GameDataId != CurrentGameDataId)
+            {
+                NextGameDataId = @event.GameDataId;
+            }
+        });
+        
         try
         {
             GD.Print("MainGameScene ready.");

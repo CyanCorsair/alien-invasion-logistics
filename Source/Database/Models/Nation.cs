@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using AlienInvasionLogistics.Source.Types;
+using Microsoft.EntityFrameworkCore;
 
 namespace AlienInvasionLogistics.Source.Database.Models;
 
+[PrimaryKey("Id")]
 public class Nation
 {
     [Key] public Guid Id { get; set; } = Guid.NewGuid();
@@ -20,7 +22,7 @@ public class Nation
     public Player Player { get; set; }
 
     public List<Guid> OccupiedCelestialBodyIds { get; set; } = new();
-    public List<CelestialBody> OccupiedCelestialBodies { get; set; } = new();
+    public List<BaseNaturalSolarObject> OccupiedCelestialBodies { get; set; } = new();
 
     public List<StaticArtificialObject> OwnedStaticObjects { get; set; } = new();
     public List<MobileArtificialObject> OwnedMobileObjects { get; set; } = new();

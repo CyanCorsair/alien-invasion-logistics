@@ -15,7 +15,7 @@ public class GameDataContext : DbContext
     public DbSet<StrategicWorldState> StrategicWorldStates { get; set; }
     public DbSet<SolarSystem> SolarSystems { get; set; }
     public DbSet<PlanetarySystem> PlanetarySystems { get; set; }
-    public DbSet<CelestialBody> CelestialBodies { get; set; }
+    public DbSet<BaseNaturalSolarObject> CelestialBodies { get; set; }
     public DbSet<StaticArtificialObject> StaticArtificialObjects { get; set; }
     public DbSet<MobileArtificialObject> MobileArtificialObjects { get; set; }
 
@@ -108,13 +108,13 @@ public class GameDataContext : DbContext
 
         // Shadow property: PlanetarySystemId
         // EF Core creates this foreign key column for moons/satellites without requiring a C# property.
-        // CelestialBody uses ParentBodyId for orbital hierarchy, but needs separate tracking for planetary system membership.
+        // BaseNaturalSolarObject uses ParentBodyId for orbital hierarchy, but needs separate tracking for planetary system membership.
         // Access via: context.Entry(celestialBody).Property("PlanetarySystemId").CurrentValue
         modelBuilder
             .Entity<PlanetarySystem>()
             .HasMany(ps => ps.CelestialBodies)
             .WithOne()  // No back-reference property
-            .HasForeignKey("PlanetarySystemId")  // Shadow property (not in CelestialBody model)
+            .HasForeignKey("PlanetarySystemId")  // Shadow property (not in BaseNaturalSolarObject model)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Shadow property: ParentPlanetarySystemId
@@ -129,13 +129,13 @@ public class GameDataContext : DbContext
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder
-            .Entity<CelestialBody>()
+            .Entity<BaseNaturalSolarObject>()
             .HasOne(cb => cb.ParentBody)
             .WithMany(cb => cb.ChildBodies)
             .HasForeignKey(cb => cb.ParentBodyId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        modelBuilder.Entity<CelestialBody>().OwnsMany(cb => cb.Orbits, orbitBuilder =>
+        modelBuilder.Entity<BaseNaturalSolarObject>().OwnsMany(cb => cb.Orbits, orbitBuilder =>
         {
             // Navigation properties to entities are not supported in owned types
             // Use the ID lists (StaticArtificialObjectIds, MobileArtificialObjectIds) for relationships
@@ -143,7 +143,7 @@ public class GameDataContext : DbContext
             orbitBuilder.Ignore(o => o.MobileArtificialObjects);
         });
 
-        modelBuilder.Entity<CelestialBody>().OwnsMany(cb => cb.LandingSites, siteBuilder =>
+        modelBuilder.Entity<BaseNaturalSolarObject>().OwnsMany(cb => cb.LandingSites, siteBuilder =>
         {
             // Navigation properties to entities are not supported in owned types
             // Use the ID lists (StaticArtificialObjectIds, MobileArtificialObjectIds) for relationships
@@ -151,13 +151,13 @@ public class GameDataContext : DbContext
             siteBuilder.Ignore(s => s.MobileArtificialObjects);
         });
 
-        modelBuilder.Entity<CelestialBody>().OwnsMany(cb => cb.ResourceDeposits);
+        modelBuilder.Entity<BaseNaturalSolarObject>().OwnsMany(cb => cb.ResourceDeposits);
 
         modelBuilder
             .Entity<Nation>()
             .HasMany(n => n.OccupiedCelestialBodies)
             .WithOne()
-            .HasForeignKey(cb => cb.OccupyingNationId)
+            .HasForeignKey(cb => cb.OccupyingNationIds)
             .OnDelete(DeleteBehavior.SetNull);
         
         modelBuilder
@@ -179,7 +179,7 @@ public class GameDataContext : DbContext
         modelBuilder.Entity<Nation>().OwnsOne(n => n.StartingResearch, researchBuilder =>
         {
             // Ignore navigation property to other owned type (ResearchItem)
-            researchBuilder.Ignore(r => r.startingResearch);
+            researchBuilder.Ignore(r => r.StartingResearchList);
         });
         
         // GameSession indexes for common queries
@@ -208,12 +208,12 @@ public class GameDataContext : DbContext
             .HasIndex(n => n.StrategicWorldStateId)
             .HasDatabaseName("IX_Nation_StrategicWorldStateId");
 
-        // CelestialBody indexes for hierarchy traversal and filtering
-        modelBuilder.Entity<CelestialBody>()
+        // BaseNaturalSolarObject indexes for hierarchy traversal and filtering
+        modelBuilder.Entity<BaseNaturalSolarObject>()
             .HasIndex(cb => cb.ParentBodyId)
             .HasDatabaseName("IX_CelestialBody_ParentBodyId");
 
-        modelBuilder.Entity<CelestialBody>()
+        modelBuilder.Entity<BaseNaturalSolarObject>()
             .HasIndex(cb => cb.BodyType)
             .HasDatabaseName("IX_CelestialBody_BodyType");
 

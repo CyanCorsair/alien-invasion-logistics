@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using AlienInvasionLogistics.Source.Types;
 using AlienInvasionLogistics.Source.UI.MenuControllers;
+using Microsoft.EntityFrameworkCore;
 
 namespace AlienInvasionLogistics.Source.Database.Models;
 
+[PrimaryKey("Id")]
 public class GameSession
 {
     [Key] public Guid Id { get; } = Guid.NewGuid();
@@ -18,6 +21,7 @@ public class GameSession
     public DateTime? LastSavedAt { get; set; } = null;
 
     // Game settings
+    public int DifficultyLevel { get; set; }
     public int NumberOfAiPlayers { get; set; }
     public int NumberOfPlanets { get; set; }
     public StarType StarType { get; set; }

@@ -209,7 +209,7 @@ public class CelestialBodyTests
     [Fact]
     public void CelestialBody_DefaultBodyType_IsPlanet()
     {
-        var body = new CelestialBody();
+        var body = new BaseNaturalSolarObject();
 
         body.BodyType.Should().Be(CelestialBodyType.Planet);
     }
@@ -217,7 +217,7 @@ public class CelestialBodyTests
     [Fact]
     public void CelestialBody_ResourceDeposits_EmptyByDefault()
     {
-        var body = new CelestialBody();
+        var body = new BaseNaturalSolarObject();
 
         body.ResourceDeposits.Should().NotBeNull().And.BeEmpty();
     }
@@ -225,7 +225,7 @@ public class CelestialBodyTests
     [Fact]
     public void CelestialBody_Orbits_EmptyByDefault()
     {
-        var body = new CelestialBody();
+        var body = new BaseNaturalSolarObject();
 
         body.Orbits.Should().NotBeNull().And.BeEmpty();
     }
@@ -233,7 +233,7 @@ public class CelestialBodyTests
     [Fact]
     public void CelestialBody_LandingSites_NullByDefault()
     {
-        var body = new CelestialBody();
+        var body = new BaseNaturalSolarObject();
 
         body.LandingSites.Should().BeNull();
     }
@@ -241,7 +241,7 @@ public class CelestialBodyTests
     [Fact]
     public void CelestialBody_DefaultValues_ShouldBeSet()
     {
-        var body = new CelestialBody();
+        var body = new BaseNaturalSolarObject();
 
         body.Id.Should().NotBe(Guid.Empty);
         body.Name.Should().Be("Unnamed Celestial Body");
@@ -293,7 +293,7 @@ public class CelestialBodyTests
     [InlineData(CelestialBodyType.Comet)]
     public void CelestialBody_AllBodyTypes_ShouldBeSettable(CelestialBodyType bodyType)
     {
-        var body = new CelestialBody { BodyType = bodyType };
+        var body = new BaseNaturalSolarObject { BodyType = bodyType };
 
         body.BodyType.Should().Be(bodyType);
     }

@@ -20,7 +20,7 @@ public partial class PlayerGameObject(
     {
         CurrentResearch = null,
         ResearchQueue = [],
-        FinishedResearch = startingResearch.startingResearch,
+        FinishedResearch = startingResearch.StartingResearchList,
         KnownResearch = []
     };
 

@@ -61,7 +61,7 @@ public class ToPlanetDtoTests
     [Fact]
     public void ToPlanetDto_PreservesAllProperties()
     {
-        var planet = new CelestialBody
+        var planet = new BaseNaturalSolarObject
         {
             Id = Guid.NewGuid(),
             Name = "Test Planet",
@@ -96,7 +96,7 @@ public class ToPlanetDtoTests
     [Fact]
     public void ToPlanetDto_NullResourceDeposits_ReturnsEmptyList()
     {
-        var planet = new CelestialBody
+        var planet = new BaseNaturalSolarObject
         {
             BodyType = CelestialBodyType.Planet,
             ResourceDeposits = null
@@ -110,7 +110,7 @@ public class ToPlanetDtoTests
     [Fact]
     public void ToPlanetDto_NullOrbits_ReturnsEmptyList()
     {
-        var planet = new CelestialBody
+        var planet = new BaseNaturalSolarObject
         {
             BodyType = CelestialBodyType.Planet,
             Orbits = null
@@ -124,7 +124,7 @@ public class ToPlanetDtoTests
     [Fact]
     public void ToPlanetDto_NullLandingSites_ReturnsEmptyList()
     {
-        var planet = new CelestialBody
+        var planet = new BaseNaturalSolarObject
         {
             BodyType = CelestialBodyType.Planet,
             LandingSites = null
@@ -176,7 +176,7 @@ public class ToPlanetDtoTests
     [InlineData(CelestialBodyType.Comet)]
     public void ToPlanetDto_NonStarTypes_ShouldSucceed(CelestialBodyType bodyType)
     {
-        var body = new CelestialBody { BodyType = bodyType };
+        var body = new BaseNaturalSolarObject { BodyType = bodyType };
 
         var dto = body.ToPlanetDto();
 
@@ -224,7 +224,7 @@ public class ToStarDtoTests
     public void ToStarDto_PreservesAllProperties()
     {
         var siblingId = Guid.NewGuid();
-        var star = new CelestialBody
+        var star = new BaseNaturalSolarObject
         {
             Id = Guid.NewGuid(),
             Name = "Sirius A",
@@ -257,7 +257,7 @@ public class ToStarDtoTests
     [Fact]
     public void ToStarDto_NullSiblingBodyIds_ReturnsEmptyList()
     {
-        var star = new CelestialBody
+        var star = new BaseNaturalSolarObject
         {
             BodyType = CelestialBodyType.Star,
             SiblingBodyIds = null
@@ -271,7 +271,7 @@ public class ToStarDtoTests
     [Fact]
     public void ToStarDto_NullResourceDeposits_ReturnsEmptyList()
     {
-        var star = new CelestialBody
+        var star = new BaseNaturalSolarObject
         {
             BodyType = CelestialBodyType.Star,
             ResourceDeposits = null
@@ -285,7 +285,7 @@ public class ToStarDtoTests
     [Fact]
     public void ToStarDto_NullOrbits_ReturnsEmptyList()
     {
-        var star = new CelestialBody
+        var star = new BaseNaturalSolarObject
         {
             BodyType = CelestialBodyType.Star,
             Orbits = null

@@ -20,7 +20,7 @@ public partial class AiPlayerGameObject(
     {
         CurrentResearch = null,
         ResearchQueue = [],
-        FinishedResearch = startingResearch.startingResearch,
+        FinishedResearch = startingResearch.StartingResearchList,
         KnownResearch = []
     };
 

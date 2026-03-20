@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using AlienInvasionLogistics.Source.Database;
 using AlienInvasionLogistics.Source.Database.Models;
 using AlienInvasionLogistics.Source.Events;
+using AlienInvasionLogistics.Source.Services;
+using AlienInvasionLogistics.Source.Types;
 using AlienInvasionLogistics.Source.UI.MenuControllers;
 using AlienInvasionLogistics.Source.Utilities;
 using Godot;
@@ -39,12 +41,25 @@ public partial class GameDataService : Node, IGameDataService
                 StartingEnergyModifier = settings.StartingEnergyModifier,
             };
 
+            SolarSystemGenerator generator = new SolarSystemGenerator();
+            StartingSettings startingStratSettings = new StartingSettings()
+            {
+                GameName = gameSession.SessionName,
+                Difficulty = (GameDifficulty)gameSession.DifficultyLevel
+            };
+            StrategicWorldState initialWorldState = new();
+            SolarSystem solarSystemDefinition = generator.GenerateSolarSystemState(startingStratSettings);
+            initialWorldState.SolarSystem = solarSystemDefinition;
+            initialWorldState.SolarSystemId = solarSystemDefinition.Id;
+            
+            
+
             ErrorHandler.LogMessage($"{JsonConvert.SerializeObject(
                 gameSession, Formatting.Indented)}",
                 severity: ErrorUtilities.MessageLevel.Info);
-            //context.GameSessions.Add(gameSession);
-            //await context.SaveChangesAsync();
-            //await transaction.CommitAsync();
+            context.GameSessions.Add(gameSession);
+            await context.SaveChangesAsync();
+            await transaction.CommitAsync();
 
             ErrorHandler.LogMessage("New game created successfully", severity: ErrorUtilities.MessageLevel.Info);
             _eventBus.Publish(new GameCreatedEvent(gameSession.Id, settings.PlayerName));
@@ -85,15 +100,9 @@ public partial class GameDataService : Node, IGameDataService
         return await context.GameSessions.ToListAsync();
     }
 
-    public async Task<GameSession> LoadGameAsync(string saveId)
+    public async Task<GameSession> LoadGameAsync(Guid saveId)
     {
         await using var context = _contextFactory.CreateDbContext();
-
-        if (!Guid.TryParse(saveId, out _))
-        {
-            ErrorHandler.LogMessage("Invalid save ID format", severity: ErrorUtilities.MessageLevel.Warning);
-            return null;
-        }
 
         var save = await context.GameSessions
             .Include(gs => gs.Players)
@@ -108,7 +117,7 @@ public partial class GameDataService : Node, IGameDataService
             .Include(gs => gs.StrategicWorldState)
                 .ThenInclude(sws => sws.SolarSystem)
                     .ThenInclude(ss => ss.PlanetarySystems)
-            .FirstOrDefaultAsync(gs => gs.Id == Guid.Parse(saveId));
+            .FirstOrDefaultAsync(gs => gs.Id == saveId);
 
         if (save != null)
         {
@@ -118,6 +127,5 @@ public partial class GameDataService : Node, IGameDataService
 
         ErrorHandler.LogMessage("No save found with that ID", severity: ErrorUtilities.MessageLevel.Warning);
         return null;
-
     }
 }

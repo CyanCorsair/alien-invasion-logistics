@@ -80,11 +80,11 @@ public static class TestDataBuilder
         };
     }
 
-    // ==================== CelestialBody ====================
+    // ==================== BaseNaturalSolarObject ====================
 
-    public static CelestialBody CreateStar(string name)
+    public static BaseNaturalSolarObject CreateStar(string name)
     {
-        return new CelestialBody
+        return new BaseNaturalSolarObject
         {
             Id = Guid.NewGuid(),
             Name = name,
@@ -96,9 +96,9 @@ public static class TestDataBuilder
         };
     }
 
-    public static CelestialBody CreatePlanet(string name, CelestialBodyType type = CelestialBodyType.Planet)
+    public static BaseNaturalSolarObject CreatePlanet(string name, CelestialBodyType type = CelestialBodyType.Planet)
     {
-        return new CelestialBody
+        return new BaseNaturalSolarObject
         {
             Id = Guid.NewGuid(),
             Name = name,
@@ -114,9 +114,9 @@ public static class TestDataBuilder
         };
     }
 
-    public static CelestialBody CreateMoon(string name, Guid parentId)
+    public static BaseNaturalSolarObject CreateMoon(string name, Guid parentId)
     {
-        return new CelestialBody
+        return new BaseNaturalSolarObject
         {
             Id = Guid.NewGuid(),
             Name = name,
@@ -140,7 +140,7 @@ public static class TestDataBuilder
         return new PlanetarySystem();
     }
 
-    public static PlanetarySystem CreatePlanetarySystem(CelestialBody centralMass)
+    public static PlanetarySystem CreatePlanetarySystem(BaseNaturalSolarObject centralMass)
     {
         return new PlanetarySystem
         {
@@ -149,7 +149,7 @@ public static class TestDataBuilder
             CentralMassId = centralMass.Id,
             CentralMass = centralMass,
             CelestialBodyIds = new List<Guid>(),
-            CelestialBodies = new List<CelestialBody>(),
+            CelestialBodies = new List<BaseNaturalSolarObject>(),
             PlanetarySystemIds = new List<Guid>(),
             PlanetarySystems = new List<PlanetarySystem>()
         };

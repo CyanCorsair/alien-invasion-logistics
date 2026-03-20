@@ -154,14 +154,14 @@ public class SceneChangeRequestedEvent : GameEvent
 /// <summary>
 ///     Published when UI needs to be refreshed
 /// </summary>
-public class UIRefreshRequestedEvent : GameEvent
+public class UiRefreshRequestedEvent : GameEvent
 {
-    public UIRefreshRequestedEvent(string uiElementName = null)
+    public UiRefreshRequestedEvent(string uiElementName = null)
     {
-        UIElementName = uiElementName;
+        UiElementName = uiElementName;
     }
 
-    public string UIElementName { get; }
+    public string UiElementName { get; }
 }
 
 /// <summary>
