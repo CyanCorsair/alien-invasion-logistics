@@ -28,15 +28,17 @@ public partial class BaseSolarObject : Node2D, IGameObject
 {
     private Area2D InteractionArea { get; set; }
     private CollisionShape2D CollisionShape { get; set; }
-    private Sprite2D SurfaceMap { get; set; }
-    private Sprite2D Icon { get; set; }
     private StaticPhysicsProperties PhysicsProperties { get; set; }
     private StaticGameplayProperties GameplayProperties { get; set; }
     private Node2D ParentBody { get; set; }
-
+    
     private float _currentTime;
     private float _initialAngle;
     private Vector2 _targetPosition;
+    
+    [Export] public Sprite2D SurfaceMap { get; set; }
+    [Export] public Sprite2D Icon { get; set; }
+    [Export] public bool IsMajor { get; set; }
 
     [Export] public float PositionX { get; set; }
     [Export] public float PositionY { get; set; }
@@ -60,7 +62,10 @@ public partial class BaseSolarObject : Node2D, IGameObject
             SunlightLevel = baseNaturalSolarObject.SunlightLevel,
             Orbits = baseNaturalSolarObject.Orbits ?? [],
             LandingSites = baseNaturalSolarObject.LandingSites ?? [],
+            ResourceDeposits = baseNaturalSolarObject.ResourceDeposits ?? []
         };
+
+        baseSolarObject.IsMajor = baseNaturalSolarObject.IsMajorBody;
 
         return baseSolarObject;
     }

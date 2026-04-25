@@ -6,6 +6,7 @@ using AlienInvasionLogistics.Source.Database.Models;
 using AlienInvasionLogistics.Source.Events;
 using AlienInvasionLogistics.Source.Services;
 using AlienInvasionLogistics.Source.Types;
+using AlienInvasionLogistics.Source.UI;
 using AlienInvasionLogistics.Source.UI.MenuControllers;
 using AlienInvasionLogistics.Source.Utilities;
 using Godot;
@@ -43,23 +44,31 @@ public partial class GameDataService : Node, IGameDataService
                 StartingEnergyModifier = settings.StartingEnergyModifier,
             };
 
-            SolarSystemGenerator generator = new SolarSystemGenerator();
+            SolarSystemGenerator generator = ServiceContainer.GetService<SolarSystemGenerator>();
             StartingSettings startingStratSettings = new StartingSettings()
             {
                 GameName = gameSession.SessionName,
-                Difficulty = (GameDifficulty)gameSession.DifficultyLevel
+                Difficulty = (GameDifficulty)gameSession.DifficultyLevel,
+                CentralSolarMass = Star.CreateFromData(settings.StarType),
+                CelestialBodyCount = settings.NumberOfPlanets,
+                AiPlayerCount = settings.AiPlayerCount,
             };
             StrategicWorldState initialWorldState = new();
             SolarSystem solarSystemDefinition = generator.GenerateSolarSystemState(startingStratSettings);
             initialWorldState.SolarSystem = solarSystemDefinition;
             initialWorldState.SolarSystemId = solarSystemDefinition.Id;
             
+            // TODO: Load in nations from JSON defs
             
+            // TODO: Create players and assign nations
+            
+            gameSession.StrategicWorldState = initialWorldState;
+            gameSession.StrategicWorldStateId = initialWorldState.Id;
 
             ErrorHandler.LogMessage($"{JsonConvert.SerializeObject(
                 gameSession, Formatting.Indented)}",
                 severity: ErrorUtilities.MessageLevel.Info);
-            context.GameSessions.Add(gameSession);
+            await context.GameSessions.AddAsync(gameSession);
             await context.SaveChangesAsync();
             await transaction.CommitAsync();
 
@@ -72,6 +81,13 @@ public partial class GameDataService : Node, IGameDataService
             ErrorHandler.LogMessage("Failed to create new game", ex);
             throw;
         }
+    }
+
+    public async Task SaveStrategicGameState(Guid sessionId, StrategicWorldState strategicGameData)
+    {
+        var session = await LoadGameAsync(sessionId);
+        session.StrategicWorldState = strategicGameData;
+        await  SaveGameAsync(session);
     }
 
     public async Task SaveGameAsync(GameSession newSession)
@@ -129,5 +145,11 @@ public partial class GameDataService : Node, IGameDataService
 
         ErrorHandler.LogMessage("No save found with that ID", severity: ErrorUtilities.MessageLevel.Warning);
         return null;
+    }
+    
+    public async Task<StrategicWorldState> LoadStrategicGameState(Guid sessionId)
+    {
+        var session = await LoadGameAsync(sessionId);
+        return session.StrategicWorldState;
     }
 }

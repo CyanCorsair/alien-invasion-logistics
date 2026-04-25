@@ -80,57 +80,29 @@ public static class SolarSystemScoreCalculator
         {
             foreach (var planetarySystem in solarSystem.PlanetarySystems)
             {
-                // Count the central mass of each planetary system
                 if (planetarySystem.CentralMass != null)
-                {
                     AddBodyToScore(score, planetarySystem.CentralMass.BodyType);
-                }
 
-                // Count all celestial bodies in the system (moons, etc.)
                 if (planetarySystem.CelestialBodies != null)
-                {
                     foreach (var body in planetarySystem.CelestialBodies)
-                    {
                         AddBodyToScore(score, body.BodyType);
-                    }
-                }
-
-                // Handle nested planetary systems (if any)
-                if (planetarySystem.PlanetarySystems != null)
-                {
-                    foreach (var nestedSystem in planetarySystem.PlanetarySystems)
-                    {
-                        ProcessNestedPlanetarySystem(score, nestedSystem);
-                    }
-                }
             }
+        }
+
+        // Asteroid belts and comet clouds contribute to minor body score
+        if (solarSystem.AsteroidBelts != null)
+        {
+            score.AsteroidBeltCount = solarSystem.AsteroidBelts.Count;
+            score.MinorBodyScore += score.AsteroidBeltCount * 20;
+        }
+
+        if (solarSystem.CometClouds != null)
+        {
+            score.CometCloudCount = solarSystem.CometClouds.Count;
+            score.MinorBodyScore += score.CometCloudCount * 15;
         }
 
         return score;
-    }
-
-    private static void ProcessNestedPlanetarySystem(SolarSystemScore score, PlanetarySystem system)
-    {
-        if (system.CentralMass != null)
-        {
-            AddBodyToScore(score, system.CentralMass.BodyType);
-        }
-
-        if (system.CelestialBodies != null)
-        {
-            foreach (var body in system.CelestialBodies)
-            {
-                AddBodyToScore(score, body.BodyType);
-            }
-        }
-
-        if (system.PlanetarySystems != null)
-        {
-            foreach (var nestedSystem in system.PlanetarySystems)
-            {
-                ProcessNestedPlanetarySystem(score, nestedSystem);
-            }
-        }
     }
 
     private static void AddBodyToScore(SolarSystemScore score, CelestialBodyType bodyType)
@@ -187,4 +159,7 @@ public class SolarSystemScore
     /// Breakdown of body counts by type.
     /// </summary>
     public Dictionary<CelestialBodyType, int> BodyCountsByType { get; set; } = new();
+
+    public int AsteroidBeltCount { get; set; }
+    public int CometCloudCount { get; set; }
 }

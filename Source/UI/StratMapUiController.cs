@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using AlienInvasionLogistics.Source.Database.Models;
 using AlienInvasionLogistics.Source.Events;
+using AlienInvasionLogistics.Source.GameObjects;
 using AlienInvasionLogistics.Source.Interfaces;
 using AlienInvasionLogistics.Source.Services;
 using AlienInvasionLogistics.Source.Types;
@@ -11,18 +13,12 @@ using Newtonsoft.Json;
 
 namespace AlienInvasionLogistics.Source.UI;
 
-public struct StrategicGameData
-{
-}
-
 public partial class StratMapUiController : Control
 {
     private Guid _currentGameId;
-    private GameSession _currentGameSession;
-    private StrategicGameData _currentGameData;
+    private StrategicWorldState _currentGameState;
     private GameDataService _gameDataService;
     private GameEventBus _gameEventBus;
-    private Node2D _solarSystemReference;
 
     public StratMapUiController()
     {
@@ -40,9 +36,17 @@ public partial class StratMapUiController : Control
         });
     }
 
-    public override void _Ready()
+    public override async void _Ready()
     {
-        GD.Print("StratMapUiController ready.");
+        try
+        {
+            GD.Print("StratMapUiController ready.");
+            await PrepareStratMap();
+        }
+        catch (Exception e)
+        {
+            GD.PrintErr(e);
+        }
     }
 
     public override void _Process(double delta)
@@ -53,37 +57,33 @@ public partial class StratMapUiController : Control
     {
         await LoadGameData();
         PrepareSolarSystemScene();
-        
     }
 
-    private async Task SaveGameData()
+    private async Task SaveStrategicGameState()
     {
-        await _gameDataService.SaveGameAsync(_currentGameSession);
+        await _gameDataService.SaveStrategicGameState(_currentGameId, _currentGameState);
     }
 
     private async Task LoadGameData()
     {
-        _currentGameSession = await _gameDataService.LoadGameAsync(_currentGameId);
+        _currentGameState = await _gameDataService.LoadStrategicGameState(_currentGameId);
     }
 
     private void PrepareSolarSystemScene()
     {
-        var solarSystemGenerator = ServiceContainer.GetService<SolarSystemGenerator>();
-        StartingSettings settings = new StartingSettings()
-        {
-            GameName = _currentGameSession.SessionName,
-            Difficulty = (GameDifficulty)_currentGameSession.DifficultyLevel
-        };
-        SolarSystem newSolarSystem = solarSystemGenerator.GenerateSolarSystemState(settings);
-        _gameEventBus.Publish(
-            new SolarSystemGeneratedEvent(newSolarSystem.Id, newSolarSystem.PlanetarySystems.Count));
+        // Set up central body Node2D
+        BaseSolarObject centralMass = BaseSolarObject.CreateFromData(_currentGameState.SolarSystem.CentralMass);
         
-        ErrorHandler.LogMessage($"{JsonConvert.SerializeObject(
-            newSolarSystem, Formatting.Indented)}",
-            severity: ErrorUtilities.MessageLevel.Info);
-    }
-
-    private void UpdateUiElements()
-    {
+        // Spawn major bodies via PlanetarySystem central mass
+        // -> Spawn minor orbiting bodies in system
+        
+        
+        // Spawn remaining bodies
+        
+        // Set up nation nodes
+        
+        // Set up player nodes
+        
+        // Spawn assets belonging to players
     }
 }

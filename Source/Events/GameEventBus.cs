@@ -26,27 +26,20 @@ public partial class GameEventBus : Node, IEventBus
 
         lock (_lock)
         {
-            var exists = DoesSubscriptionExist(handler);
+            var eventType = typeof(T);
 
-            if (!exists)
+            if (_subscriptions.TryGetValue(eventType, out var existing) && existing.Contains(handler))
             {
-                var eventType = typeof(T);
+                GD.PushWarning($"Handler already subscribed to {eventType.Name}, skipping duplicate subscription");
+                return;
+            }
 
-                if (!_subscriptions.ContainsKey(eventType)) _subscriptions[eventType] = new List<Delegate>();
+            if (!_subscriptions.ContainsKey(eventType)) _subscriptions[eventType] = new List<Delegate>();
 
-                _subscriptions[eventType].Add(handler);
+            _subscriptions[eventType].Add(handler);
 #if DEBUG
-                GD.Print(
-                    $"Subscribed to {eventType.Name}. Total subscribers: {_subscriptions[eventType].Count}"
-                );
+            GD.Print($"Subscribed to {eventType.Name}. Total subscribers: {_subscriptions[eventType].Count}");
 #endif
-            }
-            else
-            {
-                GD.PushWarning(
-                    $"Handler already subscribed to {typeof(T).Name}, skipping duplicate subscription"
-                );
-            }
         }
     }
 
@@ -106,6 +99,7 @@ public partial class GameEventBus : Node, IEventBus
         GD.Print($"Publishing {eventType.Name} to {handlers.Count} subscriber(s)");
 #endif
 
+        List<Exception> exceptions = null;
         foreach (var handler in handlers)
             try
             {
@@ -115,7 +109,11 @@ public partial class GameEventBus : Node, IEventBus
             {
                 GD.PrintErr($"Error invoking event handler for {eventType.Name}: {ex.Message}");
                 GD.PrintErr(ex.StackTrace);
+                (exceptions ??= new List<Exception>()).Add(ex);
             }
+
+        if (exceptions != null)
+            throw new AggregateException($"One or more handlers for {eventType.Name} threw an exception.", exceptions);
     }
 
     /// <summary>
@@ -162,19 +160,4 @@ public partial class GameEventBus : Node, IEventBus
         ClearAllSubscriptions();
     }
 
-    /// <summary>
-    ///     Check if a handler is already subscribed to events of type T.
-    ///     Note: Must be called within a lock on _lock
-    /// </summary>
-    /// <typeparam name="T">The event type to check</typeparam>
-    /// <param name="handler">The handler to check for</param>
-    /// <returns>True if the handler is already subscribed, false otherwise</returns>
-    private bool DoesSubscriptionExist<T>(Action<T> handler) where T : IGameEvent
-    {
-        var eventType = typeof(T);
-
-        if (_subscriptions.ContainsKey(eventType)) return _subscriptions[eventType].Contains(handler);
-
-        return false;
-    }
 }

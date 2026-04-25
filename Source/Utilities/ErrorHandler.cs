@@ -50,15 +50,23 @@ public partial class ErrorHandler : Node
         WriteToLogFile(errorInfo);
 
         // Show dialog for critical errors
-        if (severity == ErrorUtilities.MessageLevel.Critical && _instance != null)
-            _instance.CallDeferred(nameof(ShowCriticalErrorDialog), message);
+        if (severity == ErrorUtilities.MessageLevel.Critical)
+        {
+            if (_instance != null)
+                _instance.CallDeferred(nameof(ShowCriticalErrorDialog), message);
+            else
+                GD.PrintErr($"[Critical] ErrorHandler node not initialized — cannot show error dialog. Message: {message}");
+        }
     }
 
     private static void WriteToLogFile(ErrorUtilities.ErrorInfo errorInfo)
     {
         try
         {
-            using var file = FileAccess.Open(LogFilePath, FileAccess.ModeFlags.ReadWrite);
+            var mode = FileAccess.FileExists(LogFilePath)
+                ? FileAccess.ModeFlags.ReadWrite
+                : FileAccess.ModeFlags.Write;
+            using var file = FileAccess.Open(LogFilePath, mode);
             if (file != null)
             {
                 file.SeekEnd();

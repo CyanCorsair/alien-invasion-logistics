@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -9,12 +10,10 @@ namespace AlienInvasionLogistics.Source.Database.Models;
 [PrimaryKey("Id")]
 public class StrategicWorldState
 {
-    [Key] public Guid Id { get; } = Guid.NewGuid();
+    public Guid Id { get; set; } = Guid.NewGuid();
     [Required][MaxLength(128)] public string Name { get; set; } = "Unnamed Strategic World";
     public Guid SolarSystemId { get; set; }
-    public List<Guid> NationIds { get; } = [];
-    public List<Guid> PlayerIds { get; } = [];
-    public SolarSystem SolarSystem { get; set; }
+    public SolarSystem SolarSystem { get; set; } = null!;
     public List<Nation> Nations { get; } = [];
     public List<Player> Players { get; } = [];
 }
@@ -22,26 +21,53 @@ public class StrategicWorldState
 public class SolarSystem : BaseObjectType
 {
     public Guid CentralMassId { get; set; }
-    public BaseNaturalSolarObject CentralMass { get; set; }
-    public List<Guid> PlanetarySystemIds { get; set; }
-    public List<PlanetarySystem> PlanetarySystems { get; set; } = []; // Top level list of system
+    public BaseNaturalSolarObject CentralMass { get; set; } = null!;
+    public List<PlanetarySystem> PlanetarySystems { get; set; } = [];
+    public List<AsteroidBelt> AsteroidBelts { get; set; } = [];
+    public List<CometCloud> CometClouds { get; set; } = [];
+}
+
+/// <summary>
+/// An asteroid belt — an abstract orbital zone represented visually as a particle system.
+/// Density drives the GPUParticles2D particle count.
+/// </summary>
+public class AsteroidBelt
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    [Required][MaxLength(128)] public string Name { get; set; } = "Asteroid Belt";
+    public float InnerRadius { get; set; }
+    public float OuterRadius { get; set; }
+    public int Density { get; set; }
+    public int SunlightLevel { get; set; }
+    public List<GameResource> ResourceDeposits { get; set; } = [];
+}
+
+/// <summary>
+/// A comet cloud — an abstract outer-system zone (analogous to the Oort Cloud / Kuiper Belt).
+/// Density drives the GPUParticles2D particle count.
+/// </summary>
+public class CometCloud
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    [Required][MaxLength(128)] public string Name { get; set; } = "Comet Cloud";
+    public float InnerRadius { get; set; }
+    public float OuterRadius { get; set; }
+    public int Density { get; set; }
+    public int SunlightLevel { get; set; }
+    public List<GameResource> ResourceDeposits { get; set; } = [];
 }
 
 public class PlanetarySystem : BaseObjectType
 {
     public Guid CentralMassId { get; set; }
-    public BaseNaturalSolarObject CentralMass { get; set; }
-    #nullable enable
-    public List<Guid>? CelestialBodyIds { get; set; }
+    public BaseNaturalSolarObject CentralMass { get; set; } = null!;
     public List<BaseNaturalSolarObject>? CelestialBodies { get; set; }
-    public List<Guid>? PlanetarySystemIds { get; set; }
-    public List<PlanetarySystem>? PlanetarySystems { get; set; }
-    #nullable disable
 }
 
 public class BaseNaturalSolarObject : BaseObjectType
 {
     public CelestialBodyType BodyType { get; set; } = CelestialBodyType.Planet;
+    public bool IsMajorBody { get; set; } = true;
     // Physical properties
     public float PositionX { get; set; }
     public float PositionY { get; set; }
@@ -56,23 +82,28 @@ public class BaseNaturalSolarObject : BaseObjectType
     public List<GameResource> ResourceDeposits { get; set; } = [];
     public int SunlightLevel { get; set; }
     public List<Orbit> Orbits { get; set; } = [];
-    #nullable enable
     // Owned landing sites, possibly null based on type
     public List<LandingSite>? LandingSites { get; set; }
     // Orbital relationships
     public Guid? ParentBodyId { get; set; }
-    public List<Guid>? ChildBodyIds { get; set; }
-    public List<Guid>? SiblingBodyIds { get; set; }
     public BaseNaturalSolarObject? ParentBody { get; set; }
     public List<BaseNaturalSolarObject>? ChildBodies { get; set; }
     public List<BaseNaturalSolarObject>? SiblingBodies { get; set; } // For bodies directly orbiting each other, e.g. binaries
-    // Occupation
-    public List<Guid>? OccupyingNationIds { get; set; }
-    #nullable disable
+}
+
+// Base class for any location that can hold artificial objects (orbits and landing sites)
+public abstract class ArtificialObjectContainer
+{
+    public int MaxStationaryArtificialObjects { get; set; }
+    public int MaxMobileArtificialObjects { get; set; }
+    public int CurrentStationaryArtificialObjects { get; set; }
+    public int CurrentMobileArtificialObjects { get; set; }
+    public List<StaticArtificialObject> StaticArtificialObjects { get; set; } = [];
+    public List<MobileArtificialObject> MobileArtificialObjects { get; set; } = [];
 }
 
 [Owned]
-public class Orbit
+public class Orbit : ArtificialObjectContainer
 {
     [Required][MaxLength(128)] public string Name { get; set; } = "Orbit 1";
     public OrbitType OrbitType { get; set; }
@@ -80,28 +111,12 @@ public class Orbit
     public float OrbitalRadius { get; set; } // Distance from body center
     public float OrbitalPeriodAtAltitude { get; set; } // Orbital period in hours
     public float OrbitalVelocity { get; set; } // Orbital velocity in km/s
-    public int MaxStationaryArtificialObjects { get; set; }
-    public int MaxMobileArtificialObjects { get; set; }
-    public int CurrentStationaryArtificialObjects { get; set; }
-    public int CurrentMobileArtificialObjects { get; set; }
-    public List<Guid> StaticArtificialObjectIds { get; set; } = [];
-    public List<StaticArtificialObject> StaticArtificialObjects { get; set; } = [];
-    public List<Guid> MobileArtificialObjectIds { get; set; } = [];
-    public List<MobileArtificialObject> MobileArtificialObjects { get; set; } = [];
 }
 
 [Owned]
-public class LandingSite
+public class LandingSite : ArtificialObjectContainer
 {
     [Required][MaxLength(128)] public string Name { get; set; } = "Landing Site 1";
-    public int MaxStationaryArtificialObjects { get; set; }
-    public int MaxMobileArtificialObjects { get; set; }
-    public int CurrentStationaryArtificialObjects { get; set; }
-    public int CurrentMobileArtificialObjects { get; set; }
-    public List<Guid> StaticArtificialObjectIds { get; set; } = [];
-    public List<StaticArtificialObject> StaticArtificialObjects { get; set; } = [];
-    public List<Guid> MobileArtificialObjectIds { get; set; } = [];
-    public List<MobileArtificialObject> MobileArtificialObjects { get; set; } = [];
 }
 
 public class StaticArtificialObject : BaseArtificialObject
@@ -115,13 +130,13 @@ public class MobileArtificialObject : BaseArtificialObject
 public class BaseArtificialObject : BaseObjectType
 {
     public Guid OwningNationId { get; set; }
-    public Nation OwningNation { get; set; }
+    public Nation OwningNation { get; set; } = null!;
 }
 
 [PrimaryKey("Id")]
 public class BaseObjectType
 {
-    [Key] public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; set; } = Guid.NewGuid();
     [Required][MaxLength(128)] public string Name { get; set; } = "Unnamed Celestial Body";
 }
 

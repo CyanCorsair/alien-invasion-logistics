@@ -15,6 +15,8 @@ public class GameDataContext : DbContext
     public DbSet<StrategicWorldState> StrategicWorldStates { get; set; }
     public DbSet<SolarSystem> SolarSystems { get; set; }
     public DbSet<PlanetarySystem> PlanetarySystems { get; set; }
+    public DbSet<AsteroidBelt> AsteroidBelts { get; set; }
+    public DbSet<CometCloud> CometClouds { get; set; }
     public DbSet<BaseNaturalSolarObject> CelestialBodies { get; set; }
     public DbSet<StaticArtificialObject> StaticArtificialObjects { get; set; }
     public DbSet<MobileArtificialObject> MobileArtificialObjects { get; set; }
@@ -95,9 +97,27 @@ public class GameDataContext : DbContext
         modelBuilder
             .Entity<SolarSystem>()
             .HasMany(ss => ss.PlanetarySystems)
-            .WithOne()  // No back-reference property in PlanetarySystem
-            .HasForeignKey("SolarSystemId")  // Shadow property (not in PlanetarySystem model)
+            .WithOne()
+            .HasForeignKey("SolarSystemId")
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder
+            .Entity<SolarSystem>()
+            .HasMany(ss => ss.AsteroidBelts)
+            .WithOne()
+            .HasForeignKey("SolarSystemId")
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<AsteroidBelt>().OwnsMany(ab => ab.ResourceDeposits);
+
+        modelBuilder
+            .Entity<SolarSystem>()
+            .HasMany(ss => ss.CometClouds)
+            .WithOne()
+            .HasForeignKey("SolarSystemId")
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<CometCloud>().OwnsMany(cc => cc.ResourceDeposits);
 
         modelBuilder
             .Entity<PlanetarySystem>()
@@ -117,17 +137,6 @@ public class GameDataContext : DbContext
             .HasForeignKey("PlanetarySystemId")  // Shadow property (not in BaseNaturalSolarObject model)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Shadow property: ParentPlanetarySystemId
-        // EF Core creates this foreign key for nested planetary systems (e.g., dwarf planet systems within larger planet systems).
-        // Separate from solar system hierarchy to allow flexible system-within-system relationships.
-        // Access via: context.Entry(planetarySystem).Property("ParentPlanetarySystemId").CurrentValue
-        modelBuilder
-            .Entity<PlanetarySystem>()
-            .HasMany(ps => ps.PlanetarySystems)
-            .WithOne()
-            .HasForeignKey("ParentPlanetarySystemId")  // Shadow property (not in PlanetarySystem model)
-            .OnDelete(DeleteBehavior.Cascade);
-
         modelBuilder
             .Entity<BaseNaturalSolarObject>()
             .HasOne(cb => cb.ParentBody)
@@ -135,30 +144,24 @@ public class GameDataContext : DbContext
             .HasForeignKey(cb => cb.ParentBodyId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        modelBuilder.Entity<BaseNaturalSolarObject>().OwnsMany(cb => cb.Orbits, orbitBuilder =>
+        modelBuilder.Entity<BaseNaturalSolarObject>().OwnsMany(cb => cb.Orbits, b =>
         {
-            // Navigation properties to entities are not supported in owned types
-            // Use the ID lists (StaticArtificialObjectIds, MobileArtificialObjectIds) for relationships
-            orbitBuilder.Ignore(o => o.StaticArtificialObjects);
-            orbitBuilder.Ignore(o => o.MobileArtificialObjects);
+            b.Ignore(o => o.StaticArtificialObjects);
+            b.Ignore(o => o.MobileArtificialObjects);
         });
-
-        modelBuilder.Entity<BaseNaturalSolarObject>().OwnsMany(cb => cb.LandingSites, siteBuilder =>
+        modelBuilder.Entity<BaseNaturalSolarObject>().OwnsMany(cb => cb.LandingSites, b =>
         {
-            // Navigation properties to entities are not supported in owned types
-            // Use the ID lists (StaticArtificialObjectIds, MobileArtificialObjectIds) for relationships
-            siteBuilder.Ignore(s => s.StaticArtificialObjects);
-            siteBuilder.Ignore(s => s.MobileArtificialObjects);
+            b.Ignore(s => s.StaticArtificialObjects);
+            b.Ignore(s => s.MobileArtificialObjects);
         });
-
         modelBuilder.Entity<BaseNaturalSolarObject>().OwnsMany(cb => cb.ResourceDeposits);
 
+        // Many-to-many: a nation can occupy many bodies, a body can be occupied by many nations.
         modelBuilder
             .Entity<Nation>()
             .HasMany(n => n.OccupiedCelestialBodies)
-            .WithOne()
-            .HasForeignKey(cb => cb.OccupyingNationIds)
-            .OnDelete(DeleteBehavior.SetNull);
+            .WithMany()
+            .UsingEntity("NationOccupiedCelestialBody");
         
         modelBuilder
             .Entity<Nation>()

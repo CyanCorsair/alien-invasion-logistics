@@ -6,12 +6,6 @@ using Godot;
 
 namespace AlienInvasionLogistics.Source.Interfaces;
 
-public interface IGameResource
-{
-    public string Name { get; set; }
-    public Sprite2D Icon { get; set; }
-}
-
 public interface IBasePlayer
 {
     public bool IsHuman { get; set; }

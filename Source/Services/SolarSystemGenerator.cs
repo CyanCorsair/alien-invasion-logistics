@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using AlienInvasionLogistics.Source.Constants;
 using AlienInvasionLogistics.Source.Database.Models;
 using AlienInvasionLogistics.Source.Events;
@@ -19,7 +18,7 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
 {
     // TODO: Implement procedural planet name generation using this array
     private static readonly string[] PlanetNames =
-    {
+    [
         "Mercury",
         "Venus",
         "Earth",
@@ -30,10 +29,10 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
         "Neptune",
         "Pluto",
         "Eris"
-    };
+    ];
 
     // Thread-safe random number generator using ThreadLocal for concurrent generation support
-    private ThreadLocal<Random> _random;
+    private Random _random;
     private int? _seed;
 
     private IEventBus _eventBus;
@@ -47,15 +46,20 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
     public void Initialize(IEventBus eventBus, int? seed = null)
     {
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
-        
-        _seed = seed ?? (int)new Random().NextDouble() * 1_000_000;
-        _random = new ThreadLocal<Random>(() =>
-            seed.HasValue ? new Random(seed.Value) : new Random()
-        );
+
+        _seed = seed ?? (int)(new Random().NextDouble() * 1_000_000);
+        _random = new Random(_seed.Value);
+    }
+
+    private void EnsureInitialized()
+    {
+        if (_eventBus == null || _random == null)
+            throw new InvalidOperationException("SolarSystemGenerator has not been initialized. Call Initialize() first.");
     }
 
     public SolarSystem GenerateSolarSystemState(IStartingSettings settings)
     {
+        EnsureInitialized();
         ErrorHandler.LogMessage($"Generating solar system with {settings.CelestialBodyCount} planets", severity: ErrorUtilities.MessageLevel.Info);
 
         var solarSystem = new SolarSystem
@@ -71,37 +75,24 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
 
         // Phase 2: Generate planetary systems
         solarSystem.PlanetarySystems = new List<PlanetarySystem>();
-        solarSystem.PlanetarySystemIds = new List<Guid>();
 
-        int planetCount = Math.Min(settings.CelestialBodyCount, SolarSystemConstants.MaxPlanets);
-        float previousDistance = 0f;
+        var planetCount = Math.Min(settings.CelestialBodyCount, SolarSystemConstants.MaxPlanets);
+        var previousDistance = 0f;
 
-        for (int i = 0; i < planetCount; i++)
+        for (var i = 0; i < planetCount; i++)
         {
-            var planetarySystem = GeneratePlanetarySystem(i, planetCount, star.Id, star.Mass, ref previousDistance);
+            var planetarySystem = GeneratePlanetarySystem(i, star.Id, star.Mass, ref previousDistance);
             solarSystem.PlanetarySystems.Add(planetarySystem);
-            solarSystem.PlanetarySystemIds.Add(planetarySystem.Id);
         }
 
         // Phase 3: Generate asteroid belt
-        var asteroidBelt = GenerateAsteroidBelt(star.Id, star.Mass);
-        foreach (var asteroidSystem in asteroidBelt)
-        {
-            solarSystem.PlanetarySystems.Add(asteroidSystem);
-            solarSystem.PlanetarySystemIds.Add(asteroidSystem.Id);
-        }
+        solarSystem.AsteroidBelts = [GenerateAsteroidBelt()];
 
         // Phase 4: Generate comet cloud
-        var comets = GenerateComets(star.Id, star.Mass);
-        foreach (var cometSystem in comets)
-        {
-            solarSystem.PlanetarySystems.Add(cometSystem);
-            solarSystem.PlanetarySystemIds.Add(cometSystem.Id);
-        }
+        solarSystem.CometClouds = [GenerateCometCloud()];
 
-        int totalBodies = planetCount + asteroidBelt.Count + comets.Count;
-        ErrorHandler.LogMessage($"Solar system generated: {planetCount} planets, {asteroidBelt.Count} asteroids, {comets.Count} comets", severity: ErrorUtilities.MessageLevel.Info);
-        _eventBus?.Publish(new SolarSystemGeneratedEvent(solarSystem.Id, totalBodies));
+        ErrorHandler.LogMessage($"Solar system generated: {planetCount} planets, 1 asteroid belt, 1 comet cloud", severity: ErrorUtilities.MessageLevel.Info);
+        _eventBus.Publish(new SolarSystemGeneratedEvent(solarSystem.Id, planetCount));
 
         return solarSystem;
     }
@@ -110,7 +101,7 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
     {
         float mass = starSettings.Mass > 0 ? starSettings.Mass : 1.0f;
         float radius = 50f;
-        float rotationPeriod = GenerateRotationPeriod(mass, 0f, CelestialBodyType.Star);
+        float rotationPeriod = GenerateRotationPeriod(0f, CelestialBodyType.Star);
 
         var star = new BaseNaturalSolarObject
         {
@@ -133,12 +124,10 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
         return star;
     }
 
-    private PlanetarySystem GeneratePlanetarySystem(int index, int totalPlanets, Guid starId, float starMass, ref float previousDistance)
+    private PlanetarySystem GeneratePlanetarySystem(int index, Guid starId, float starMass, ref float previousDistance)
     {
         string planetName = index < PlanetNames.Length ? PlanetNames[index] : $"Planet {index + 1}";
-
         float distance = CalculateOrbitalDistance(index, ref previousDistance);
-
         var planet = GeneratePlanet(planetName, distance, starId, starMass);
 
         var system = new PlanetarySystem
@@ -147,22 +136,17 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
             Name = $"{planetName} System",
             CentralMass = planet,
             CentralMassId = planet.Id,
-            CelestialBodies = new List<BaseNaturalSolarObject>(),
-            CelestialBodyIds = new List<Guid>()
+            CelestialBodies = new List<BaseNaturalSolarObject>()
         };
 
-        if ((planet.BodyType == CelestialBodyType.LargePlanet ||
-             planet.BodyType == CelestialBodyType.GasGiant ||
-             planet.BodyType == CelestialBodyType.IceGiant)
-            && _random.Value.NextDouble() < 0.25)
+        if (planet.BodyType is not (CelestialBodyType.LargePlanet or CelestialBodyType.GasGiant
+                or CelestialBodyType.IceGiant)
+            || !(_random.NextDouble() < 0.25)) return system;
+        var moonCount = _random.Next(1, 4);
+        for (var m = 0; m < moonCount; m++)
         {
-            int moonCount = _random.Value.Next(1, 4);
-            for (int m = 0; m < moonCount; m++)
-            {
-                var moon = GenerateMoon(m, planet.Id, planet.Mass, planet.BodyType, planet.PositionX, planet.PositionY, planet.SemiMajorAxis);
-                system.CelestialBodies.Add(moon);
-                system.CelestialBodyIds.Add(moon.Id);
-            }
+            var moon = GenerateMoon(m, planet.Id, planet.Mass, planet.BodyType, planet.PositionX, planet.PositionY);
+            system.CelestialBodies.Add(moon);
         }
 
         return system;
@@ -176,20 +160,17 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
         float orbitalPeriod = CalculateOrbitalPeriod(distance);
 
         var bodyType = CelestialBodyClassifier.Classify(mass, radius, eccentricity, CelestialBodyType.Star);
-        float rotationPeriod = GenerateRotationPeriod(mass, distance, bodyType);
+        float rotationPeriod = GenerateRotationPeriod(distance, bodyType);
 
-        float angle = (float)(_random.Value.NextDouble() * 2 * Math.PI);
-        float posX = distance * MathF.Cos(angle);
-        float posY = distance * MathF.Sin(angle);
-
-        int sunlightLevel = (int)(100 * (1.0f / (1.0f + distance / SolarSystemConstants.BaseOrbitalRadius)));
+        var (posX, posY) = CalculateRandomOrbitalPosition(distance);
+        int sunlightLevel = CalculateSunlightLevel(distance);
 
         // Determine resources based on body type
         List<GameResource> resources = bodyType switch
         {
             CelestialBodyType.GasGiant => new List<GameResource>(), // No resources - can't harvest from gas giants
-            CelestialBodyType.IceGiant => GenerateIceGiantResources(distance),
-            _ => GenerateResources(bodyType, distance)
+            CelestialBodyType.IceGiant => GenerateIceGiantResources(),
+            _ => GenerateResources(distance)
         };
 
         // Determine landing sites based on body type
@@ -223,23 +204,24 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
         return planet;
     }
 
-    private BaseNaturalSolarObject GenerateMoon(int index, Guid parentPlanetId, float parentMass, CelestialBodyType parentBodyType, float planetX, float planetY, float parentSemiMajorAxis)
+    private BaseNaturalSolarObject GenerateMoon(int index, Guid parentPlanetId, float parentMass, CelestialBodyType parentBodyType, float planetX, float planetY)
     {
         float moonDistance = 20f + (index * 15f);
-        float angle = (float)(_random.Value.NextDouble() * 2 * Math.PI);
+        float angle = (float)(_random.NextDouble() * 2 * Math.PI);
 
-        float mass = (float)(_random.Value.NextDouble() * 0.1 + 0.01);
-        float radius = (float)(_random.Value.NextDouble() * 5 + 2);
-        float eccentricity = (float)(_random.Value.NextDouble() * 0.05);
+        float mass = (float)(_random.NextDouble() * 0.1 + 0.01);
+        float radius = (float)(_random.NextDouble() * 5 + 2);
+        float eccentricity = (float)(_random.NextDouble() * 0.05);
 
         var bodyType = CelestialBodyClassifier.Classify(mass, radius, eccentricity, parentBodyType);
-        float rotationPeriod = GenerateRotationPeriod(mass, moonDistance, bodyType);
+        float rotationPeriod = GenerateRotationPeriod(moonDistance, bodyType);
 
         var moon = new BaseNaturalSolarObject
         {
             Id = Guid.NewGuid(),
             Name = $"Moon {index + 1}",
             BodyType = bodyType,
+            IsMajorBody = false,
             PositionX = planetX + moonDistance * MathF.Cos(angle),
             PositionY = planetY + moonDistance * MathF.Sin(angle),
             Mass = mass,
@@ -250,7 +232,7 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
             RotationPeriod = rotationPeriod,
             ParentBodyId = parentPlanetId,
             SunlightLevel = 50,
-            ResourceDeposits = GenerateResources(bodyType, moonDistance),
+            ResourceDeposits = GenerateResources(moonDistance),
             Orbits = GenerateOrbitalZonesForBody(mass, radius, rotationPeriod, bodyType, parentMass, moonDistance),
             LandingSites = GenerateLandingSites(1, 2)
         };
@@ -262,7 +244,7 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
     {
         float baseDistance = SolarSystemConstants.BaseOrbitalRadius * MathF.Pow(1.7f, index);
 
-        float variance = (float)(_random.Value.NextDouble() - 0.5) * SolarSystemConstants.OrbitalRadiusVariance;
+        float variance = (float)(_random.NextDouble() - 0.5) * SolarSystemConstants.OrbitalRadiusVariance;
         float distance = baseDistance + variance;
 
         if (distance < previousDistance + 50f)
@@ -279,30 +261,30 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
     private float GenerateMass(float distance)
     {
         float normalizedDistance = distance / SolarSystemConstants.BaseOrbitalRadius;
-        double roll = _random.Value.NextDouble();
+        double roll = _random.NextDouble();
 
         // Inner zone (< 2x base): rocky planets
         if (normalizedDistance < 2f)
         {
             return roll < 0.7f
-                ? (float)(_random.Value.NextDouble() * 1.5 + 0.1)   // Terrestrial (0.1 - 1.6 Earth masses)
-                : (float)(_random.Value.NextDouble() * 5 + 2);      // Super-Earth (2 - 7 Earth masses)
+                ? (float)(_random.NextDouble() * 1.5 + 0.1)   // Terrestrial (0.1 - 1.6 Earth masses)
+                : (float)(_random.NextDouble() * 5 + 2);      // Super-Earth (2 - 7 Earth masses)
         }
 
         // Middle zone (2-6x base): gas/ice giants
         if (normalizedDistance < 6f)
         {
             return roll < 0.6f
-                ? (float)(_random.Value.NextDouble() * 200 + 50)    // Gas giant (50 - 250 Earth masses)
-                : (float)(_random.Value.NextDouble() * 30 + 10);    // Ice giant (10 - 40 Earth masses)
+                ? (float)(_random.NextDouble() * 200 + 50)    // Gas giant (50 - 250 Earth masses)
+                : (float)(_random.NextDouble() * 30 + 10);    // Ice giant (10 - 40 Earth masses)
         }
 
         // Outer zone (> 6x base): ice giants, dwarf planets, small bodies
         if (roll < 0.3f)
-            return (float)(_random.Value.NextDouble() * 20 + 10);   // Ice giant
+            return (float)(_random.NextDouble() * 20 + 10);   // Ice giant
         if (roll < 0.7f)
-            return (float)(_random.Value.NextDouble() * 0.1 + 0.001); // Dwarf planet
-        return (float)(_random.Value.NextDouble() * 0.001);          // Minor planet/asteroid
+            return (float)(_random.NextDouble() * 0.1 + 0.001); // Dwarf planet
+        return (float)(_random.NextDouble() * 0.001);          // Minor planet/asteroid
     }
 
     /// <summary>
@@ -317,40 +299,36 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
 
     private float GenerateEccentricity()
     {
-        double roll = _random.Value.NextDouble();
+        double roll = _random.NextDouble();
         if (roll < 0.7)
-            return (float)(_random.Value.NextDouble() * 0.05);
-        else if (roll < 0.95)
-            return (float)(_random.Value.NextDouble() * 0.1 + 0.05);
-        else
-            return (float)(_random.Value.NextDouble() * 0.15 + 0.15);
+            return (float)(_random.NextDouble() * 0.05);
+        if (roll < 0.95)
+            return (float)(_random.NextDouble() * 0.1 + 0.05);
+        return (float)(_random.NextDouble() * 0.15 + 0.15);
     }
 
     private float CalculateOrbitalPeriod(float semiMajorAxis)
     {
-        // Prevent division by zero
-        if (!(SolarSystemConstants.BaseOrbitalRadius <= 0))
-            return MathF.Sqrt(MathF.Pow(semiMajorAxis / SolarSystemConstants.BaseOrbitalRadius, 3))
-                   * SolarSystemConstants.OrbitalSpeedBase;
+        return MathF.Sqrt(MathF.Pow(semiMajorAxis / SolarSystemConstants.BaseOrbitalRadius, 3))
+               * SolarSystemConstants.OrbitalSpeedBase;
     }
 
-    private List<GameResource> GenerateResources(CelestialBodyType bodyType, float distance)
+    private List<GameResource> GenerateResources(float distance)
     {
         var resources = new List<GameResource>();
-        int resourceCount = _random.Value.Next(0, 4);
+        int resourceCount = _random.Next(0, 4);
 
         for (int i = 0; i < resourceCount; i++)
         {
             bool isMinerals = distance < SolarSystemConstants.BaseOrbitalRadius * 3
-                ? _random.Value.NextDouble() < 0.7
-                : _random.Value.NextDouble() < 0.3;
+                ? _random.NextDouble() < 0.7
+                : _random.NextDouble() < 0.3;
 
             resources.Add(new GameResource
             {
-                Name = isMinerals ? "Minerals" : "Energy",
                 ResourceType = isMinerals ? ResourceTypes.Minerals : ResourceTypes.Energy,
-                Quantity = _random.Value.Next(100, 1000),
-                MaxQuantity = _random.Value.Next(5000, 20000)
+                Quantity = _random.Next(100, 1000),
+                MaxQuantity = _random.Next(5000, 20000)
             });
         }
 
@@ -374,7 +352,7 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
         float leoRadius = radius + leoAltitude;
         orbits.Add(CreateOrbit(
             "Low Orbit",
-            Types.OrbitType.LowOrbit,
+            OrbitType.LowOrbit,
             leoAltitude,
             leoRadius,
             mass,
@@ -393,7 +371,7 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
                 float geoRadius = radius + geoAltitude;
                 orbits.Add(CreateOrbit(
                     "Geostationary Orbit",
-                    Types.OrbitType.GeostationaryOrbit,
+                    OrbitType.GeostationaryOrbit,
                     geoAltitude,
                     geoRadius,
                     mass,
@@ -409,7 +387,7 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
         float heoRadius = radius + heoAltitude;
         orbits.Add(CreateOrbit(
             "High Orbit",
-            Types.OrbitType.HighOrbit,
+            OrbitType.HighOrbit,
             heoAltitude,
             heoRadius,
             mass,
@@ -422,7 +400,7 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
     /// <summary>
     /// Creates an Orbit with calculated orbital mechanics properties.
     /// </summary>
-    private Orbit CreateOrbit(string name, Types.OrbitType orbitType, float altitude, float orbitalRadius, float bodyMass, int baseCapacity)
+    private Orbit CreateOrbit(string name, OrbitType orbitType, float altitude, float orbitalRadius, float bodyMass, int baseCapacity)
     {
         float orbitalPeriod = OrbitalMechanicsCalculator.CalculateOrbitalPeriod(bodyMass, orbitalRadius);
         float orbitalVelocity = OrbitalMechanicsCalculator.CalculateOrbitalVelocity(bodyMass, orbitalRadius);
@@ -435,8 +413,8 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
             OrbitalRadius = orbitalRadius,
             OrbitalPeriodAtAltitude = orbitalPeriod,
             OrbitalVelocity = orbitalVelocity,
-            MaxStationaryArtificialObjects = _random.Value.Next(baseCapacity / 2, baseCapacity),
-            MaxMobileArtificialObjects = _random.Value.Next(baseCapacity, baseCapacity * 3),
+            MaxStationaryArtificialObjects = _random.Next(baseCapacity / 2, baseCapacity),
+            MaxMobileArtificialObjects = _random.Next(baseCapacity, baseCapacity * 3),
             CurrentStationaryArtificialObjects = 0,
             CurrentMobileArtificialObjects = 0,
             StaticArtificialObjects = new List<StaticArtificialObject>(),
@@ -447,57 +425,57 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
     /// <summary>
     /// Generates rotation period based on body type and orbital characteristics.
     /// </summary>
-    private float GenerateRotationPeriod(float mass, float distance, CelestialBodyType bodyType)
+    private float GenerateRotationPeriod(float distance, CelestialBodyType bodyType)
     {
         return bodyType switch
         {
             // Gas giants rotate fast (10-17 hours) - Jupiter/Saturn-like
-            CelestialBodyType.GasGiant => (float)(_random.Value.NextDouble()
+            CelestialBodyType.GasGiant => (float)(_random.NextDouble()
                 * (SolarSystemConstants.GasGiantMaxRotationHours - SolarSystemConstants.GasGiantMinRotationHours)
                 + SolarSystemConstants.GasGiantMinRotationHours),
 
             // Ice giants rotate fast but slightly slower (14-17 hours) - Uranus/Neptune-like
-            CelestialBodyType.IceGiant => (float)(_random.Value.NextDouble()
+            CelestialBodyType.IceGiant => (float)(_random.NextDouble()
                 * (SolarSystemConstants.IceGiantMaxRotationHours - SolarSystemConstants.IceGiantMinRotationHours)
                 + SolarSystemConstants.IceGiantMinRotationHours),
 
             // Inner planets have chance of tidal locking (Mercury-like)
             CelestialBodyType.Planet when distance < SolarSystemConstants.BaseOrbitalRadius * 2 =>
-                _random.Value.NextDouble() < SolarSystemConstants.InnerPlanetTidalLockProbability
+                _random.NextDouble() < SolarSystemConstants.InnerPlanetTidalLockProbability
                     ? 0f
-                    : (float)(_random.Value.NextDouble()
+                    : (float)(_random.NextDouble()
                         * (SolarSystemConstants.TerrestrialMaxRotationHours - SolarSystemConstants.TerrestrialMinRotationHours)
                         + SolarSystemConstants.TerrestrialMinRotationHours),
 
             // Regular terrestrial planets (10-50 hours)
             CelestialBodyType.Planet or CelestialBodyType.LargePlanet =>
-                (float)(_random.Value.NextDouble()
+                (float)(_random.NextDouble()
                     * (SolarSystemConstants.TerrestrialMaxRotationHours - SolarSystemConstants.TerrestrialMinRotationHours)
                     + SolarSystemConstants.TerrestrialMinRotationHours),
 
             // Dwarf planets often have longer rotation periods
-            CelestialBodyType.DwarfPlanet => (float)(_random.Value.NextDouble()
+            CelestialBodyType.DwarfPlanet => (float)(_random.NextDouble()
                 * (SolarSystemConstants.DwarfPlanetMaxRotationHours - SolarSystemConstants.DwarfPlanetMinRotationHours)
                 + SolarSystemConstants.DwarfPlanetMinRotationHours),
 
             // Moons often tidally locked
-            CelestialBodyType.Moon => _random.Value.NextDouble() < SolarSystemConstants.MoonTidalLockProbability
+            CelestialBodyType.Moon => _random.NextDouble() < SolarSystemConstants.MoonTidalLockProbability
                 ? 0f
-                : (float)(_random.Value.NextDouble()
+                : (float)(_random.NextDouble()
                     * (SolarSystemConstants.MoonMaxRotationHours - SolarSystemConstants.MoonMinRotationHours)
                     + SolarSystemConstants.MoonMinRotationHours),
 
             // Stars have their own rotation (in days, converted to hours)
-            CelestialBodyType.Star => (float)(_random.Value.NextDouble()
+            CelestialBodyType.Star => (float)(_random.NextDouble()
                 * (SolarSystemConstants.StarMaxRotationDays - SolarSystemConstants.StarMinRotationDays)
                 + SolarSystemConstants.StarMinRotationDays) * 24f,
 
             // Small bodies rotate variably
-            CelestialBodyType.Asteroid => (float)(_random.Value.NextDouble()
+            CelestialBodyType.Asteroid => (float)(_random.NextDouble()
                 * (SolarSystemConstants.AsteroidMaxRotationHours - SolarSystemConstants.AsteroidMinRotationHours)
                 + SolarSystemConstants.AsteroidMinRotationHours),
 
-            CelestialBodyType.Comet => (float)(_random.Value.NextDouble()
+            CelestialBodyType.Comet => (float)(_random.NextDouble()
                 * (SolarSystemConstants.CometMaxRotationHours - SolarSystemConstants.CometMinRotationHours)
                 + SolarSystemConstants.CometMinRotationHours),
 
@@ -506,18 +484,29 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
         };
     }
 
+    private (float posX, float posY) CalculateRandomOrbitalPosition(float distance)
+    {
+        float angle = (float)(_random.NextDouble() * 2 * Math.PI);
+        return (distance * MathF.Cos(angle), distance * MathF.Sin(angle));
+    }
+
+    private int CalculateSunlightLevel(float distance)
+    {
+        return (int)(100 * (1.0f / (1.0f + distance / SolarSystemConstants.BaseOrbitalRadius)));
+    }
+
     private List<LandingSite> GenerateLandingSites(int min, int max)
     {
         var sites = new List<LandingSite>();
-        int count = _random.Value.Next(min, max + 1);
+        int count = _random.Next(min, max + 1);
 
         for (int i = 0; i < count; i++)
         {
             sites.Add(new LandingSite
             {
                 Name = $"Landing Site {i + 1}",
-                MaxStationaryArtificialObjects = _random.Value.Next(20, 100),
-                MaxMobileArtificialObjects = _random.Value.Next(10, 50),
+                MaxStationaryArtificialObjects = _random.Next(20, 100),
+                MaxMobileArtificialObjects = _random.Next(10, 50),
                 CurrentStationaryArtificialObjects = 0,
                 CurrentMobileArtificialObjects = 0,
                 StaticArtificialObjects = new List<StaticArtificialObject>(),
@@ -532,244 +521,111 @@ public partial class SolarSystemGenerator : Node, ISolarSystemGenerator
     /// Generates ice giant resources (energy-focused, collected from atmosphere).
     /// Ice giants primarily produce energy from hydrogen, helium-3, and other atmospheric gases.
     /// </summary>
-    /// <param name="distance">Distance from the star in game units.</param>
     /// <returns>List of resources available on the ice giant.</returns>
-    private List<GameResource> GenerateIceGiantResources(float distance)
+    private List<GameResource> GenerateIceGiantResources()
     {
         var resources = new List<GameResource>();
-        int resourceCount = _random.Value.Next(1, 3);
+        int resourceCount = _random.Next(1, 3);
 
         for (int i = 0; i < resourceCount; i++)
         {
             // Ice giants are primarily energy sources (hydrogen, helium-3, etc.)
-            bool isEnergy = _random.Value.NextDouble() < 0.8;
+            bool isEnergy = _random.NextDouble() < 0.8;
 
             resources.Add(new GameResource
             {
-                Name = isEnergy ? "Energy" : "Minerals",
                 ResourceType = isEnergy ? ResourceTypes.Energy : ResourceTypes.Minerals,
-                Quantity = _random.Value.Next(200, 1500),
-                MaxQuantity = _random.Value.Next(10000, 50000)
+                Quantity = _random.Next(200, 1500),
+                MaxQuantity = _random.Next(10000, 50000)
             });
         }
 
         return resources;
     }
 
-    /// <summary>
-    /// Generates an asteroid belt around the star.
-    /// </summary>
-    /// <param name="starId">The ID of the parent star.</param>
-    /// <param name="starMass">The mass of the parent star.</param>
-    /// <returns>List of planetary systems containing asteroids.</returns>
-    private List<PlanetarySystem> GenerateAsteroidBelt(Guid starId, float starMass)
+    private AsteroidBelt GenerateAsteroidBelt()
     {
-        var asteroidSystems = new List<PlanetarySystem>();
-        int asteroidCount = _random.Value.Next(
-            SolarSystemConstants.MinAsteroidBeltObjects,
-            SolarSystemConstants.MaxAsteroidBeltObjects + 1
-        );
+        float innerRadius = SolarSystemConstants.BaseOrbitalRadius * SolarSystemConstants.AsteroidBeltInnerMultiplier;
+        float outerRadius = SolarSystemConstants.BaseOrbitalRadius * SolarSystemConstants.AsteroidBeltOuterMultiplier;
+        int density = _random.Next(SolarSystemConstants.MinAsteroidBeltObjects, SolarSystemConstants.MaxAsteroidBeltObjects + 1);
+        float midRadius = (innerRadius + outerRadius) / 2f;
 
-        float innerEdge = SolarSystemConstants.BaseOrbitalRadius * SolarSystemConstants.AsteroidBeltInnerMultiplier;
-        float outerEdge = SolarSystemConstants.BaseOrbitalRadius * SolarSystemConstants.AsteroidBeltOuterMultiplier;
-
-        for (int i = 0; i < asteroidCount; i++)
-        {
-            float distance = innerEdge + (float)(_random.Value.NextDouble() * (outerEdge - innerEdge));
-            var asteroid = GenerateAsteroid(i, distance, starId, starMass);
-
-            var system = new PlanetarySystem
-            {
-                Id = Guid.NewGuid(),
-                Name = $"Asteroid {i + 1}",
-                CentralMass = asteroid,
-                CentralMassId = asteroid.Id,
-                CelestialBodies = new List<BaseNaturalSolarObject>(),
-                CelestialBodyIds = new List<Guid>()
-            };
-
-            asteroidSystems.Add(system);
-        }
-
-        return asteroidSystems;
-    }
-
-    /// <summary>
-    /// Generates a single asteroid.
-    /// </summary>
-    private BaseNaturalSolarObject GenerateAsteroid(int index, float distance, Guid parentId, float parentMass)
-    {
-        float mass = (float)(_random.Value.NextDouble() * 0.0001 + 0.00001); // Very small mass
-        float radius = (float)(_random.Value.NextDouble() * 2 + 0.5);        // Small radius
-        float eccentricity = (float)(_random.Value.NextDouble() * 0.3);      // Moderate eccentricity
-        float orbitalPeriod = CalculateOrbitalPeriod(distance);
-        float rotationPeriod = GenerateRotationPeriod(mass, distance, CelestialBodyType.Asteroid);
-
-        float angle = (float)(_random.Value.NextDouble() * 2 * Math.PI);
-        float posX = distance * MathF.Cos(angle);
-        float posY = distance * MathF.Sin(angle);
-
-        int sunlightLevel = (int)(100 * (1.0f / (1.0f + distance / SolarSystemConstants.BaseOrbitalRadius)));
-
-        return new BaseNaturalSolarObject
+        return new AsteroidBelt
         {
             Id = Guid.NewGuid(),
-            Name = $"Asteroid {index + 1}",
-            BodyType = CelestialBodyType.Asteroid,
-            PositionX = posX,
-            PositionY = posY,
-            Mass = mass,
-            Radius = radius,
-            OrbitalPeriod = orbitalPeriod,
-            SemiMajorAxis = distance,
-            Eccentricity = eccentricity,
-            RotationPeriod = rotationPeriod,
-            ParentBodyId = parentId,
-            SunlightLevel = sunlightLevel,
-            ResourceDeposits = GenerateAsteroidResources(),
-            Orbits = new List<Orbit>(), // Asteroids don't have orbital zones
-            LandingSites = GenerateLandingSites(1, 1) // Single landing site
+            Name = "Asteroid Belt",
+            InnerRadius = innerRadius,
+            OuterRadius = outerRadius,
+            Density = density,
+            SunlightLevel = CalculateSunlightLevel(midRadius),
+            ResourceDeposits = GenerateAsteroidBeltResources()
         };
     }
 
-    /// <summary>
-    /// Generates asteroid resources (80% chance of minerals).
-    /// Asteroids are primarily composed of rocky and metallic materials.
-    /// </summary>
-    /// <returns>List of resources available on the asteroid.</returns>
-    private List<GameResource> GenerateAsteroidResources()
+    private List<GameResource> GenerateAsteroidBeltResources()
     {
         var resources = new List<GameResource>();
 
-        // 80% chance to have minerals
-        if (_random.Value.NextDouble() < 0.8)
-        {
+        // Belts are almost always mineral-rich
+        if (_random.NextDouble() < 0.9)
             resources.Add(new GameResource
             {
-                Name = "Minerals",
                 ResourceType = ResourceTypes.Minerals,
-                Quantity = _random.Value.Next(50, 500),
-                MaxQuantity = _random.Value.Next(500, 2000)
+                Quantity = _random.Next(1000, 10000),
+                MaxQuantity = _random.Next(50000, 200000)
             });
-        }
 
-        return resources;
-    }
-
-    /// <summary>
-    /// Generates comets in the outer solar system.
-    /// </summary>
-    /// <param name="starId">The ID of the parent star.</param>
-    /// <param name="starMass">The mass of the parent star.</param>
-    /// <returns>List of planetary systems containing comets.</returns>
-    private List<PlanetarySystem> GenerateComets(Guid starId, float starMass)
-    {
-        var cometSystems = new List<PlanetarySystem>();
-        int cometCount = _random.Value.Next(
-            SolarSystemConstants.MinComets,
-            SolarSystemConstants.MaxComets + 1
-        );
-
-        for (int i = 0; i < cometCount; i++)
-        {
-            var comet = GenerateComet(i, starId, starMass);
-
-            var system = new PlanetarySystem
-            {
-                Id = Guid.NewGuid(),
-                Name = $"Comet {i + 1}",
-                CentralMass = comet,
-                CentralMassId = comet.Id,
-                CelestialBodies = new List<BaseNaturalSolarObject>(),
-                CelestialBodyIds = new List<Guid>()
-            };
-
-            cometSystems.Add(system);
-        }
-
-        return cometSystems;
-    }
-
-    /// <summary>
-    /// Generates a single comet with high eccentricity orbit.
-    /// </summary>
-    private BaseNaturalSolarObject GenerateComet(int index, Guid parentId, float parentMass)
-    {
-        float innerEdge = SolarSystemConstants.BaseOrbitalRadius * SolarSystemConstants.CometZoneMinMultiplier;
-        float outerEdge = SolarSystemConstants.BaseOrbitalRadius * SolarSystemConstants.CometZoneMaxMultiplier;
-        float distance = innerEdge + (float)(_random.Value.NextDouble() * (outerEdge - innerEdge));
-
-        float mass = (float)(_random.Value.NextDouble() * 0.00001 + 0.000001); // Very small mass
-        float radius = (float)(_random.Value.NextDouble() * 1.5 + 0.3);        // Small radius
-
-        // Comets have highly elliptical orbits
-        float eccentricity = SolarSystemConstants.CometMinEccentricity +
-            (float)(_random.Value.NextDouble() *
-            (SolarSystemConstants.CometMaxEccentricity - SolarSystemConstants.CometMinEccentricity));
-
-        float orbitalPeriod = CalculateOrbitalPeriod(distance);
-        float rotationPeriod = GenerateRotationPeriod(mass, distance, CelestialBodyType.Comet);
-
-        float angle = (float)(_random.Value.NextDouble() * 2 * Math.PI);
-        float posX = distance * MathF.Cos(angle);
-        float posY = distance * MathF.Sin(angle);
-
-        int sunlightLevel = (int)(100 * (1.0f / (1.0f + distance / SolarSystemConstants.BaseOrbitalRadius)));
-
-        return new BaseNaturalSolarObject
-        {
-            Id = Guid.NewGuid(),
-            Name = $"Comet {index + 1}",
-            BodyType = CelestialBodyType.Comet,
-            PositionX = posX,
-            PositionY = posY,
-            Mass = mass,
-            Radius = radius,
-            OrbitalPeriod = orbitalPeriod,
-            SemiMajorAxis = distance,
-            Eccentricity = eccentricity,
-            RotationPeriod = rotationPeriod,
-            ParentBodyId = parentId,
-            SunlightLevel = sunlightLevel,
-            ResourceDeposits = GenerateCometResources(),
-            Orbits = new List<Orbit>(), // Comets don't have orbital zones
-            LandingSites = null // No landing on comets
-        };
-    }
-
-    /// <summary>
-    /// Generates comet resources (60% energy, 30% minerals).
-    /// Comets contain volatile ices that can be harvested for energy,
-    /// along with some mineral content in their rocky cores.
-    /// </summary>
-    /// <returns>List of resources available on the comet.</returns>
-    private List<GameResource> GenerateCometResources()
-    {
-        var resources = new List<GameResource>();
-
-        // 60% chance for energy (volatile ices, etc.)
-        if (_random.Value.NextDouble() < 0.6)
-        {
+        // Some belts contain energy-rich material
+        if (_random.NextDouble() < 0.3)
             resources.Add(new GameResource
             {
-                Name = "Energy",
                 ResourceType = ResourceTypes.Energy,
-                Quantity = _random.Value.Next(30, 200),
-                MaxQuantity = _random.Value.Next(200, 1000)
+                Quantity = _random.Next(500, 5000),
+                MaxQuantity = _random.Next(10000, 50000)
             });
-        }
 
-        // 30% chance for minerals
-        if (_random.Value.NextDouble() < 0.3)
+        return resources;
+    }
+
+    private CometCloud GenerateCometCloud()
+    {
+        float innerRadius = SolarSystemConstants.BaseOrbitalRadius * SolarSystemConstants.CometZoneMinMultiplier;
+        float outerRadius = SolarSystemConstants.BaseOrbitalRadius * SolarSystemConstants.CometZoneMaxMultiplier;
+        int density = _random.Next(SolarSystemConstants.MinComets, SolarSystemConstants.MaxComets + 1);
+        float midRadius = (innerRadius + outerRadius) / 2f;
+
+        return new CometCloud
         {
+            Id = Guid.NewGuid(),
+            Name = "Comet Cloud",
+            InnerRadius = innerRadius,
+            OuterRadius = outerRadius,
+            Density = density,
+            SunlightLevel = CalculateSunlightLevel(midRadius),
+            ResourceDeposits = GenerateCometCloudResources()
+        };
+    }
+
+    private List<GameResource> GenerateCometCloudResources()
+    {
+        var resources = new List<GameResource>();
+
+        // Volatile ices make clouds a primary energy source
+        if (_random.NextDouble() < 0.7)
             resources.Add(new GameResource
             {
-                Name = "Minerals",
-                ResourceType = ResourceTypes.Minerals,
-                Quantity = _random.Value.Next(20, 100),
-                MaxQuantity = _random.Value.Next(100, 500)
+                ResourceType = ResourceTypes.Energy,
+                Quantity = _random.Next(500, 3000),
+                MaxQuantity = _random.Next(10000, 50000)
             });
-        }
+
+        if (_random.NextDouble() < 0.4)
+            resources.Add(new GameResource
+            {
+                ResourceType = ResourceTypes.Minerals,
+                Quantity = _random.Next(200, 1000),
+                MaxQuantity = _random.Next(5000, 20000)
+            });
 
         return resources;
     }

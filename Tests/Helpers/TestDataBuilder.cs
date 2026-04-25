@@ -147,10 +147,7 @@ public static class TestDataBuilder
             Name = $"{centralMass.Name} System",
             CentralMassId = centralMass.Id,
             CentralMass = centralMass,
-            CelestialBodyIds = new List<Guid>(),
-            CelestialBodies = new List<BaseNaturalSolarObject>(),
-            PlanetarySystemIds = new List<Guid>(),
-            PlanetarySystems = new List<PlanetarySystem>()
+            CelestialBodies = new List<BaseNaturalSolarObject>()
         };
     }
 
@@ -165,7 +162,6 @@ public static class TestDataBuilder
             Name = "Solar System",
             CentralMassId = star.Id,
             CentralMass = star,
-            PlanetarySystemIds = new List<Guid>(),
             PlanetarySystems = new List<PlanetarySystem>()
         };
     }
@@ -176,7 +172,6 @@ public static class TestDataBuilder
     {
         return new GameResource
         {
-            Name = "Minerals",
             ResourceType = ResourceTypes.Minerals,
             Quantity = quantity,
             MaxQuantity = int.MaxValue
@@ -187,7 +182,6 @@ public static class TestDataBuilder
     {
         return new GameResource
         {
-            Name = "Energy",
             ResourceType = ResourceTypes.Energy,
             Quantity = quantity,
             MaxQuantity = int.MaxValue

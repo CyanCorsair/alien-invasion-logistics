@@ -163,7 +163,6 @@ public class GameDataContextTests : IDisposable
             Id = Guid.NewGuid(),
             Name = "Solar System",
             CentralMassId = star.Id,
-            PlanetarySystemIds = new List<Guid>()
         };
         _context.SolarSystems.Add(system);
         await _context.SaveChangesAsync();
@@ -185,8 +184,6 @@ public class GameDataContextTests : IDisposable
             Id = Guid.NewGuid(),
             Name = "Earth System",
             CentralMassId = planet.Id,
-            CelestialBodyIds = new List<Guid>(),
-            PlanetarySystemIds = new List<Guid>()
         };
         _context.PlanetarySystems.Add(system);
         await _context.SaveChangesAsync();
@@ -261,8 +258,6 @@ public class GameDataContextTests : IDisposable
             Id = Guid.NewGuid(),
             Name = "Earth System",
             CentralMassId = planet.Id,
-            CelestialBodyIds = new List<Guid>(),
-            PlanetarySystemIds = new List<Guid>()
         };
 
         var solarSystem = new SolarSystem
@@ -270,7 +265,6 @@ public class GameDataContextTests : IDisposable
             Id = Guid.NewGuid(),
             Name = "Solar System",
             CentralMassId = star.Id,
-            PlanetarySystemIds = new List<Guid>(),
             PlanetarySystems = new List<PlanetarySystem> { planetarySystem }
         };
         _context.SolarSystems.Add(solarSystem);
@@ -447,8 +441,6 @@ public class GameDataContextTests : IDisposable
             Id = Guid.NewGuid(),
             Name = "Earth System",
             CentralMassId = planet.Id,
-            CelestialBodyIds = new List<Guid>(),
-            PlanetarySystemIds = new List<Guid>()
         };
 
         var solarSystem = new SolarSystem
@@ -456,7 +448,6 @@ public class GameDataContextTests : IDisposable
             Id = Guid.NewGuid(),
             Name = "Solar System",
             CentralMassId = star.Id,
-            PlanetarySystemIds = new List<Guid>(),
             PlanetarySystems = new List<PlanetarySystem> { planetarySystem }
         };
         _context.SolarSystems.Add(solarSystem);

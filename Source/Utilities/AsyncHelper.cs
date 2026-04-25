@@ -10,8 +10,11 @@ namespace AlienInvasionLogistics.Source.Utilities;
 public static class AsyncHelper
 {
     /// <summary>
-    ///     Executes an async task and calls a callback on completion
-    ///     Safe to call from Godot's main thread
+    ///     Executes an async task and calls a callback on completion.
+    ///     Safe to call from Godot's main thread.
+    ///     Fire-and-forget: the caller cannot await this method or observe its completion.
+    ///     All exceptions are routed to <paramref name="onError"/>; if no handler is provided
+    ///     they are logged and swallowed rather than propagating to the caller.
     /// </summary>
     public static async void RunAsync(Func<Task> asyncMethod, Action onComplete = null,
         Action<Exception> onError = null)
@@ -31,7 +34,10 @@ public static class AsyncHelper
     }
 
     /// <summary>
-    ///     Executes an async task with a return value
+    ///     Executes an async task with a return value.
+    ///     Fire-and-forget: the caller cannot await this method or observe its completion.
+    ///     All exceptions are routed to <paramref name="onError"/>; if no handler is provided
+    ///     they are logged and swallowed rather than propagating to the caller.
     /// </summary>
     public static async void RunAsync<T>(Func<Task<T>> asyncMethod, Action<T> onComplete,
         Action<Exception> onError = null)

@@ -85,10 +85,8 @@ public partial class ServiceContainer : Node
         // Register GameObjectFactoryService (plain C# class)
         _services.AddSingleton<GameObjectFactoryService>(sp =>
         {
-            var factory = new GameObjectFactoryService();
             var eventBus = sp.GetRequiredService<IEventBus>();
-            factory.Initialize(eventBus);
-            return factory;
+            return new GameObjectFactoryService(eventBus);
         });
 
         _serviceProvider = _services.BuildServiceProvider();

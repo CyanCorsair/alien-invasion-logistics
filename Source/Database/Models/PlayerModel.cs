@@ -9,7 +9,7 @@ namespace AlienInvasionLogistics.Source.Database.Models;
 [PrimaryKey("Id")]
 public class Player
 {
-    [Key] public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; set; } = Guid.NewGuid();
 
     [Required] public bool IsHuman { get; set; } = false;
 

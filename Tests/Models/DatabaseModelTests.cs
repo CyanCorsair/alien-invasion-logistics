@@ -66,7 +66,6 @@ public class GameSessionTests
     {
         var session = new GameSession();
 
-        session.PlayerIds.Should().NotBeNull().And.BeEmpty();
         session.Players.Should().NotBeNull().And.BeEmpty();
     }
 
@@ -175,7 +174,6 @@ public class NationTests
     {
         var nation = new Nation();
 
-        nation.OccupiedCelestialBodyIds.Should().NotBeNull().And.BeEmpty();
         nation.OccupiedCelestialBodies.Should().NotBeNull().And.BeEmpty();
         nation.OwnedStaticObjects.Should().NotBeNull().And.BeEmpty();
         nation.OwnedMobileObjects.Should().NotBeNull().And.BeEmpty();
@@ -307,8 +305,8 @@ public class GameResourceTests
     {
         var resource = new GameResource();
 
-        resource.Name.Should().Be("Resource Name");
         resource.ResourceType.Should().Be(ResourceTypes.Minerals);
+        resource.Name.Should().Be("Minerals");
         resource.Quantity.Should().Be(0);
         resource.MaxQuantity.Should().Be(int.MaxValue);
     }
@@ -402,12 +400,10 @@ public class OrbitTests
     }
 
     [Fact]
-    public void Orbit_ObjectIdLists_EmptyByDefault()
+    public void Orbit_ArtificialObjectCollections_EmptyByDefault()
     {
         var orbit = new Orbit();
 
-        orbit.StaticArtificialObjectIds.Should().NotBeNull().And.BeEmpty();
-        orbit.MobileArtificialObjectIds.Should().NotBeNull().And.BeEmpty();
         orbit.StaticArtificialObjects.Should().NotBeNull().And.BeEmpty();
         orbit.MobileArtificialObjects.Should().NotBeNull().And.BeEmpty();
     }
@@ -462,12 +458,12 @@ public class LandingSiteTests
     }
 
     [Fact]
-    public void LandingSite_ObjectIdLists_EmptyByDefault()
+    public void LandingSite_ArtificialObjectCollections_EmptyByDefault()
     {
         var site = new LandingSite();
 
-        site.StaticArtificialObjectIds.Should().NotBeNull().And.BeEmpty();
-        site.MobileArtificialObjectIds.Should().NotBeNull().And.BeEmpty();
+        site.StaticArtificialObjects.Should().NotBeNull().And.BeEmpty();
+        site.MobileArtificialObjects.Should().NotBeNull().And.BeEmpty();
     }
 }
 
@@ -487,10 +483,7 @@ public class PlanetarySystemTests
     {
         var system = new PlanetarySystem();
 
-        system.CelestialBodyIds.Should().BeNull();
         system.CelestialBodies.Should().BeNull();
-        system.PlanetarySystemIds.Should().BeNull();
-        system.PlanetarySystems.Should().BeNull();
     }
 
     [Fact]
@@ -502,8 +495,6 @@ public class PlanetarySystemTests
         system.CentralMassId.Should().Be(planet.Id);
         system.CentralMass.Should().Be(planet);
         system.Name.Should().Contain("Earth");
-        system.CelestialBodyIds.Should().NotBeNull().And.BeEmpty();
-        system.PlanetarySystemIds.Should().NotBeNull().And.BeEmpty();
     }
 }
 
@@ -554,8 +545,6 @@ public class StrategicWorldStateTests
     {
         var state = new StrategicWorldState();
 
-        state.NationIds.Should().NotBeNull().And.BeEmpty();
-        state.PlayerIds.Should().NotBeNull().And.BeEmpty();
         state.Nations.Should().NotBeNull().And.BeEmpty();
         state.Players.Should().NotBeNull().And.BeEmpty();
     }

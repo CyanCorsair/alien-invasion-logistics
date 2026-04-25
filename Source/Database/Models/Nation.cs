@@ -9,7 +9,7 @@ namespace AlienInvasionLogistics.Source.Database.Models;
 [PrimaryKey("Id")]
 public class Nation
 {
-    [Key] public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; set; } = Guid.NewGuid();
 
     [Required][MaxLength(128)] public string Name { get; set; } = "Unnamed Nation";
 
@@ -21,7 +21,6 @@ public class Nation
     public Guid PlayerId { get; set; }
     public Player Player { get; set; }
 
-    public List<Guid> OccupiedCelestialBodyIds { get; set; } = new();
     public List<BaseNaturalSolarObject> OccupiedCelestialBodies { get; set; } = new();
 
     public List<StaticArtificialObject> OwnedStaticObjects { get; set; } = new();

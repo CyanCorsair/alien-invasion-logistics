@@ -65,5 +65,8 @@
         <!-- Utilities -->
         <Compile Include="..\Source\Utilities\OrbitalMechanicsCalculator.cs" Link="LinkedSource\Utilities\OrbitalMechanicsCalculator.cs"/>
     </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\Source\Alien Invasion Logistics.csproj" />
+    </ItemGroup>
 
 </Project>

@@ -1,4 +1,5 @@
 using System;
+using AlienInvasionLogistics.Source.Utilities;
 
 namespace AlienInvasionLogistics.Source.Events;
 // ==================== Game Lifecycle Events ====================
@@ -189,7 +190,7 @@ public class ErrorOccurredEvent : GameEvent
     public ErrorOccurredEvent(
         string message,
         Exception exception = null,
-        string severity = "Error"
+        ErrorUtilities.MessageLevel severity = ErrorUtilities.MessageLevel.Error
     )
     {
         Message = message;
@@ -199,5 +200,5 @@ public class ErrorOccurredEvent : GameEvent
 
     public string Message { get; }
     public Exception Exception { get; }
-    public string Severity { get; }
+    public ErrorUtilities.MessageLevel Severity { get; }
 }
